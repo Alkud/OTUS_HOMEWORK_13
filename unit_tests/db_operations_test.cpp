@@ -22,8 +22,8 @@ BOOST_AUTO_TEST_CASE(create_table_test)
     BOOST_CHECK(testTable.insertName(22, "Bill") == true);
 
     BOOST_CHECK(testTable.getDataSize() == 2);
-    BOOST_CHECK(testTable[12] == "Bob");
-    BOOST_CHECK(testTable[22] == "Bill");
+    BOOST_CHECK(testTable.getName(12) == "Bob");
+    BOOST_CHECK(testTable.getName(22) == "Bill");
 
     BOOST_CHECK(testTable.insertName(12, "John") == false);
   }
@@ -57,7 +57,7 @@ BOOST_AUTO_TEST_CASE(copy_table_test)
 
     for (int idx{-10}; idx < 10; ++idx)
     {
-      BOOST_CHECK(copyTable[idx] == std::to_string(idx));
+      BOOST_CHECK(copyTable.getName(idx) == std::to_string(idx));
     }
   }
   catch (const std::exception& ex)
@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE(create_db_test)
       ++tableIdx;
       for (int idx{1}; idx < 15; ++idx)
       {
-        BOOST_CHECK(table.second[idx] == std::to_string(idx));
+        BOOST_CHECK(table.second->getName(idx) == std::to_string(idx));
       }
     }
   }
@@ -129,7 +129,7 @@ BOOST_AUTO_TEST_CASE(copy_db_test)
 
     for (const auto& table : copyDB)
     {
-      BOOST_CHECK(table.second.getDataSize() == 10);
+      BOOST_CHECK(table.second->getDataSize() == 10);
     }
 
     sourceDB.clear();
@@ -138,7 +138,7 @@ BOOST_AUTO_TEST_CASE(copy_db_test)
     {
       for (int idx{20}; idx < 30; ++idx)
       {
-        BOOST_CHECK(copyDB[std::to_string(tableIdx)][idx] == std::to_string(idx));
+        BOOST_CHECK(copyDB[std::to_string(tableIdx)]->getName(idx) == std::to_string(idx));
       }
     }
   }
@@ -221,6 +221,18 @@ BOOST_AUTO_TEST_CASE(intersect_tables_test)
       testTableB.insertName(idx, std::to_string(idx * 2 + 1));
     }
 
+    //    table A             table B
+    //    id | name           id | name
+    //     0 |  0              1 |  1
+    //     2 |  2              3 |  3
+    //     4 |  4              5 |  5
+    //     6 |  6              7 |  7
+    //     8 |  8              9 |  9
+    //    10 | 10             11 | 11
+    //    33 | 66             33 | 67
+    //    34 | 68             34 | 69
+    //    35 | 70             35 | 71
+
     auto intersectionResult(tablesIntersection(testTableA, testTableB));
 
     std::stringstream testStream{};
@@ -231,11 +243,18 @@ BOOST_AUTO_TEST_CASE(intersect_tables_test)
                  << record.second.second << "\n";
     }
 
+    //    id | name | name
+    //    33 | 66   | 67
+    //    34 | 68   | 69
+    //    35 | 70   | 71
+
     std::string testString {
       "33,66,67\n"
       "34,68,69\n"
       "35,70,71\n"
     };
+
+
 
     BOOST_CHECK(testStream.str() == testString);
   }
@@ -267,6 +286,23 @@ BOOST_AUTO_TEST_CASE(tables_symmetric_difference_test)
       testTableB.insertName(idx * 2 + 1, std::to_string(idx * 2 + 1));
     }
 
+    //    table A             table B
+    //    id | name           id | name
+    //     0 |  0              0 |  1
+    //     1 |  2              1 |  3
+    //     2 |  4              2 |  5
+    //     3 |  6              3 |  7
+    //     4 |  8              4 |  9
+    //     5 | 10              5 | 11
+    //     6 | 12              6 | 13
+    //     7 | 14              7 | 15
+    //     8 | 16              8 | 17
+    //     9 | 18              9 | 19
+    //    66 | 66             67 | 67
+    //    68 | 68             69 | 69
+    //    70 | 70             71 | 71
+
+
     auto symmetricDifferenceResult(tablesSymmetricDifference(testTableA, testTableB));
 
     std::stringstream testStream{};
@@ -277,6 +313,14 @@ BOOST_AUTO_TEST_CASE(tables_symmetric_difference_test)
                  << record.second.second << "\n";
     }
 
+    //    id | name | name
+    //    66 | 66   |
+    //    67 |      | 67
+    //    68 | 68   |
+    //    69 |      | 69
+    //    70 | 70   |
+    //    71 |      | 71
+
     std::string testString {
       "66,66,\n"
       "67,,67\n"
@@ -285,6 +329,8 @@ BOOST_AUTO_TEST_CASE(tables_symmetric_difference_test)
       "70,70,\n"
       "71,,71\n"
     };
+
+
 
     BOOST_CHECK(testStream.str() == testString);
   }

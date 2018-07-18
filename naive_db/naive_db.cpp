@@ -49,18 +49,21 @@ NaiveTable& NaiveTable::operator=(NaiveTable&& other)
 void NaiveTable::clear()
 {
   std::unique_lock<std::shared_timed_mutex> lockSelfData{dataLock};
+
   data.clear();
 }
 
 bool NaiveTable::insertName(const int id, const std::string& name)
 {
   std::unique_lock<std::shared_timed_mutex> lockSelfData{dataLock};
+
   return data.insert(std::make_pair(id, std::make_shared<std::string>(name))).second;
 }
 
 std::string NaiveTable::getName(const int id) const
 {
   std::shared_lock<std::shared_timed_mutex> lockSelfData{dataLock};
+
   if (data.find(id) == data.end())
   {
     throw std::out_of_range(WRONG_ID);
@@ -71,19 +74,31 @@ std::string NaiveTable::getName(const int id) const
   }
 }
 
-std::string NaiveTable::operator[](const int id) const
+SharedConstString NaiveTable::operator[](const int id) const
 {
-  return getName(id);
+  std::shared_lock<std::shared_timed_mutex> lockSelfData{dataLock};
+
+  if (data.find(id) == data.end())
+  {
+    throw std::out_of_range(WRONG_ID);
+  }
+  else
+  {
+    return std::const_pointer_cast<const std::string>(data.at(id));
+  }
 }
 
 size_t NaiveTable::getDataSize() const
 {
-  std::unique_lock<std::shared_timed_mutex> lockSelfData{dataLock};
+  std::shared_lock<std::shared_timed_mutex> lockSelfData{dataLock};
+
   return data.size();
 }
 
 std::set<int> NaiveTable::getIndices() const
 {
+  std::shared_lock<std::shared_timed_mutex> lockSelfData{dataLock};
+
   std::set<int> result;
 
   for (const auto& record : data)
@@ -151,65 +166,96 @@ void NaiveDB::clear()
 bool NaiveDB::createTable(const std::string& alias)
 {
   std::unique_lock<std::shared_timed_mutex> lockSelfTables{tablesLock};
-  return tables.insert(std::make_pair(alias, NaiveTable{})).second;
+  return tables.insert(std::make_pair(alias, std::make_shared<NaiveTable>())).second;
 }
 
 bool NaiveDB::insertTable(const std::string& alias, const NaiveTable& table)
 {
   std::unique_lock<std::shared_timed_mutex> lockSelfTables{tablesLock};
-  return tables.insert(std::make_pair(alias, table)).second;
+  return tables.insert(std::make_pair(alias, std::make_shared<NaiveTable>(table))).second;
 }
 
 NaiveTable NaiveDB::getTable(const std::string& alias) const
 {
   std::shared_lock<std::shared_timed_mutex> lockSelfTables{tablesLock};
+
   if (tables.find(alias) == tables.end())
   {
     throw std::out_of_range(WRONG_ALIAS);
   }
   else
   {
-    return tables.at(alias);
+    return *tables.at(alias);
   }
 }
 
-NaiveTable NaiveDB::operator[](const std::string& alias) const
+SharedConstNaiveTable NaiveDB::operator[](const std::string& alias) const
 {
-  return getTable(alias);
+  std::shared_lock<std::shared_timed_mutex> lockSelfTables{tablesLock};
+
+  if (tables.find(alias) == tables.end())
+  {
+    throw std::out_of_range(WRONG_ALIAS);
+  }
+  else
+  {
+    return std::const_pointer_cast<const NaiveTable>(tables.at(alias));
+  }
 }
 
 bool NaiveDB::insertNameToTable(const std::string& alias, const int id, const std::string& name)
 {
+  std::unique_lock<std::shared_timed_mutex> lockSelfTables{tablesLock};
+
   if (tables.find(alias) == tables.end())
   {
     return false;
   }
   else
   {
-    return tables[alias].insertName(id, name);
+    return tables[alias]->insertName(id, name);
   }
 }
 
 std::string NaiveDB::getNameFromTable(const std::string& alias, const int id) const
 {
+  std::shared_lock<std::shared_timed_mutex> lockSelfTables{tablesLock};
+
   if (tables.find(alias) == tables.end())
   {
     throw std::out_of_range(WRONG_ALIAS);;
   }
   else
   {
-    return tables.at(alias).getName(id);
+    return tables.at(alias)->getName(id);
   }
 }
 
 size_t NaiveDB::getTablesSize() const
 {
-  std::unique_lock<std::shared_timed_mutex> lockSelfTables{tablesLock};
+  std::shared_lock<std::shared_timed_mutex> lockSelfTables{tablesLock};
+
   return tables.size();
+}
+
+size_t NaiveDB::getTotalDataSize() const
+{
+  std::shared_lock<std::shared_timed_mutex> lockSelfTables{tablesLock};
+
+  size_t result{};
+
+  for (const auto tbl: tables)
+  {
+    result += tbl.second->getDataSize();
+  }
+
+  return  result;
 }
 
 std::set<std::string> NaiveDB::getAliases() const
 {
+  std::shared_lock<std::shared_timed_mutex> lockSelfTables{tablesLock};
+
   std::set<std::string> result;
 
   for (const auto& tbl : tables)

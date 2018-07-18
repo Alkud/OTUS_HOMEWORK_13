@@ -30,20 +30,25 @@ public:
   outputStream{newOutputStream},
   errorStream{newErrorStream},
 
-  service{},
-  work {new asio::io_service::work(service)},
+  service{ new asio::io_service},
+  work {new asio::io_service::work(*service)},
+
+  isStarted{false},
+  shouldExit{false},
 
   terminationLock{},
   terminationNotifier{},
   acceptorStopped{true},
+  dbManagerStopped{true},
 
   asyncAcceptor{ new AsyncAcceptor (
     newAddress,
-    newPortNumber,
-    newOutputStream,
+    newPortNumber,    
     service,
     terminationNotifier,
     acceptorStopped,
+    newOutputStream,
+    newErrorStream,
     outputLock
   )}
   {}
@@ -55,14 +60,18 @@ public:
       //std::cout << "-- Server destructor\n";
     #endif
 
-    if (acceptorStopped.load() != true)
-    {
-      stop();
-    }
+    stop();
   }
 
   void start()
   {
+    if (isStarted.load() == true)
+    {
+      return;
+    }
+
+    isStarted.store(true);
+
     asyncAcceptor->start();
 
     acceptorStopped.store(false);
@@ -75,6 +84,13 @@ public:
 
   void stop()
   {
+    if (shouldExit.load() == true)
+    {
+      return;
+    }
+
+    shouldExit.store(true);
+
     #ifdef NDEBUG
     #else
       //std::cout << "-- called Server::stop()\n";
@@ -115,9 +131,9 @@ public:
       }
     }
 
-    service.stop();
+    service->stop();
 
-    while(service.stopped() != true)
+    while(service->stopped() != true)
     {}
 
     #ifdef NDEBUG
@@ -133,16 +149,16 @@ public:
 
 private:
 
-  void run(asio::io_service& service) noexcept
+  void run(SharedService service) noexcept
   {
     try
     {
-      service.run();
+      service->run();
     }
     catch (const std::exception& ex)
     {
       std::lock_guard<std::mutex> lockOutput{outputLock};
-      std::cerr << "Server stopped. Reason: " << ex.what() << '\n';
+      errorStream << "Server stopped. Reason: " << ex.what() << '\n';
     }
   }
 
@@ -153,12 +169,17 @@ private:
   std::ostream& outputStream;
   std::ostream& errorStream;
 
-  asio::io_service service;
+  SharedService service;
   UniqueWork work;
+
+
+  std::atomic<bool> isStarted;
+  std::atomic<bool> shouldExit;
 
   std::mutex terminationLock;
   std::condition_variable terminationNotifier;
   std::atomic<bool> acceptorStopped;
+  std::atomic<bool> dbManagerStopped;
 
   std::unique_ptr<AsyncAcceptor> asyncAcceptor;
 

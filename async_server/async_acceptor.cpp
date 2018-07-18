@@ -12,13 +12,14 @@ using namespace std::chrono_literals;
 
 AsyncAcceptor::AsyncAcceptor(const asio::ip::address_v4 newAddress,
   const uint16_t newPortNumber,
-  asio::io_service& newService,
+  const SharedService& newService,
   std::condition_variable& newTerminationNotifier,
   std::atomic<bool>& newTerminationFlag,
-  std::ostream& newErrorStream, std::mutex& newOutputLock) :
+  std::ostream& newOutputStream, std::ostream& newErrorStream,
+  std::mutex& newOutputLock) :
 
 address{newAddress}, portNumber{newPortNumber}, service{newService},
-endpoint{address, portNumber}, acceptor{service, endpoint},
+endpoint{address, portNumber}, acceptor{*service, endpoint},
 
 currentReader{}, activeReaderCount{},
 terminationLock{},
@@ -26,25 +27,40 @@ terminationLock{},
 terminationNotifier{newTerminationNotifier},
 terminationFlag{newTerminationFlag},
 
+isStarted{false},
 shouldExit{false},
+
+outputStream{newOutputStream},
 errorStream{newErrorStream},
 outputLock{newOutputLock}
 {}
 
 void AsyncAcceptor::start()
-{  
+{
+  if (isStarted.load() == true)
+  {
+    return;
+  }
+
+  isStarted.store(true);
+
   terminationFlag.store(false);
   doAccept();
 }
 
 void AsyncAcceptor::stop()
 {
+  if (shouldExit.load() == true)
+  {
+    return;
+  }
+
+  shouldExit.store(true);
+
   #ifdef NDEBUG
   #else
     //std::cout << "-- Acceptor stop\n";
   #endif
-
-  shouldExit.store(true);
 
   if (acceptor.is_open())
   {
@@ -87,7 +103,7 @@ void AsyncAcceptor::doAccept()
     //std::cout << "-- start doAccept\n";
   #endif
 
-  auto socket {std::make_shared<asio::ip::tcp::socket>(service)};
+  auto socket {std::make_shared<asio::ip::tcp::socket>(*service)};
 
   acceptor.async_accept(*socket.get(), [this, socket](const system::error_code& error)
   {
@@ -117,11 +133,11 @@ void AsyncAcceptor::onAcception(SharedSocket acceptedSocket)
   #endif
 
   currentReader.reset( new AsyncReader(
-    acceptedSocket,
-    //processor, openDelimiter, closeDelimiter,
+    acceptedSocket,    
     acceptor, activeReaderCount,
     terminationNotifier, terminationLock,
-    errorStream, outputLock,
+    outputStream, errorStream,
+    outputLock,
     shouldExit
   ));
 

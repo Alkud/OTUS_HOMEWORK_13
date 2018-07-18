@@ -1,30 +1,17 @@
 #include "command_translator.h"
 
-CommandReaction
-reactError (std::string request,
-            SharedSocket socket);
-
-CommandReaction
-reactInsert (const std::string& table,
-             const std::string& id,
-             const std::string& name,
-             SharedSocket socket);
-
-CommandReaction
-reactIntersection (SharedSocket socket);
-
-CommandReaction
-reactSymmetricDifference (SharedSocket socket);
-
-CommandReaction
-reactTruncate (const std::string& table,
-               SharedSocket socket);
-
-/* --------------------------------------------------------------------------------------------------------------------- */
+std::map<std::string, std::pair<uint, uint>>
+CommandTranslator::dbCommandCodes
+{
+  {"INSERT", {static_cast<uint>(DBCommands::INSERT), 3}},                             // code = 0, number of arguments = 3
+  {"TRUNCATE", {static_cast<uint>(DBCommands::TRUNCATE), 1}},                         // code = 100, number of arguments = 1
+  {"INTERSECTION", {static_cast<uint>(DBCommands::INTERSECTION), 0}},                 // code = 200, number of arguments = 0
+  {"SYMMETRIC_DIFFERENCE", {static_cast<uint>(DBCommands::SYMMETRIC_DIFFERENCE), 0}}, // code = 300, number of arguments = 3
+};
 
 CommandReaction CommandTranslator::translate(const std::string& request, SharedSocket replySocket)
 {
-  std::istringstream tempStream{command};
+  std::istringstream tempStream{request};
 
   /* split received string into words */
   std::vector<std::string> splittedCommand{
@@ -36,9 +23,9 @@ CommandReaction CommandTranslator::translate(const std::string& request, SharedS
 
   if (splittedCommand.size() == 0                                  // empty command
       || dbCommandCodes.find(commandName) == dbCommandCodes.end()  // unknown command
-      || command.size() != dbCommandCodes[commandName].second + 1) // wrong number of arguments
+      || splittedCommand.size() != dbCommandCodes[commandName].second + 1) // wrong number of arguments
   {
-    return reactError(command, replySocket);
+    return reactError(request, replySocket);
   }
 
   auto commandCode {dbCommandCodes[commandName].first}; // numeric command code
@@ -46,6 +33,16 @@ CommandReaction CommandTranslator::translate(const std::string& request, SharedS
   switch (commandCode)
   {
   case static_cast<uint>(DBCommands::INSERT):
+    try /* make sure id field is convertible */
+    {
+      std::stoi(splittedCommand[2]);
+    }
+    catch(...)
+    {
+      return reactError(request, replySocket);
+      break;
+    }
+
     return reactInsert(splittedCommand[1],
       splittedCommand[2],
       splittedCommand[3],
@@ -72,7 +69,7 @@ CommandReaction CommandTranslator::translate(const std::string& request, SharedS
     break;
 
   default:
-    return reactError(command, replySocket);
+    return reactError(request, replySocket);
     break;
   }
 }
@@ -80,7 +77,8 @@ CommandReaction CommandTranslator::translate(const std::string& request, SharedS
 
 /* ------------------------------------------------------------------------------------------------ */
 
-CommandReaction reactError(std::string request, SharedSocket socket)
+CommandReaction
+CommandTranslator::reactError(std::string request, SharedSocket socket)
 {
   std::stringstream replyStream{};
   replyStream << "ERR bad request: " << "\'" << request << "\'\n";
@@ -97,7 +95,8 @@ CommandReaction reactError(std::string request, SharedSocket socket)
   return result;
 };
 
-CommandReaction reactInsert(const std::string& table,
+CommandReaction
+CommandTranslator::reactInsert(const std::string& table,
   const std::string& id,
   const std::string& name,
   SharedSocket socket
@@ -116,7 +115,8 @@ CommandReaction reactInsert(const std::string& table,
   return result;
 };
 
-CommandReaction reactIntersection(SharedSocket socket)
+CommandReaction
+CommandTranslator::reactIntersection(SharedSocket socket)
 {
   std::vector<std::string> arguments{};
 
@@ -127,18 +127,20 @@ CommandReaction reactIntersection(SharedSocket socket)
   return result;
 };
 
-CommandReaction reactSymmetricDifference(SharedSocket socket)
+CommandReaction
+CommandTranslator::reactSymmetricDifference(SharedSocket socket)
 {
   std::vector<std::string> arguments{};
 
-  DBCommands command {DBCommands::INTERSECTION};
+  DBCommands command {DBCommands::SYMMETRIC_DIFFERENCE};
 
   auto result{std::make_tuple(command, arguments, socket)};
 
   return result;
 };
 
-CommandReaction reactTruncate(const std::string& table, SharedSocket socket)
+CommandReaction
+CommandTranslator::reactTruncate(const std::string& table, SharedSocket socket)
 {
   std::vector<std::string> arguments{};
   arguments.push_back(table);

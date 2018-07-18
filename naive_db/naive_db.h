@@ -8,7 +8,14 @@
 #include <unordered_map>
 #include <shared_mutex>
 
+using SharedNaiveTable = std::shared_ptr<class NaiveTable>;
+using SharedConstNaiveTable = std::shared_ptr<const class NaiveTable>;
+
+using SharedNaiveDB = std::shared_ptr<class NaiveDB>;
+using SharedConstNaiveDB = std::shared_ptr<const class NaiveDB>;
+
 using SharedString = std::shared_ptr<std::string>;
+using SharedConstString = std::shared_ptr<const std::string>;
 
 const std::string WRONG_ID {"wrong_id"};
 
@@ -42,7 +49,7 @@ public:
  /// Returns a record if given id found
  std::string getName(const int id) const;
  /// Returns result of getName(id)
- std::string operator[](const int id) const;
+ SharedConstString operator[](const int id) const;
 
  /// Returns actual count of records
  size_t getDataSize() const;
@@ -99,13 +106,13 @@ public:
   /// Creates a new empty table if given alias NOT found
   bool createTable(const std::string& alias);
 
-  /// Inserts an existng table if given alias NOT found
+  /// Inserts a copy of existng table if given alias NOT found
   bool insertTable(const std::string& alias, const NaiveTable& table);
 
-  /// Returns a table if given alias found
+  /// Returns a copy of table if given alias found
   NaiveTable getTable(const std::string& alias) const ;
-  /// Returns result of getTable(alias)
-  NaiveTable operator[](const std::string& alias) const;
+  /// Returns pointer to a table if given alias found
+  SharedConstNaiveTable operator[](const std::string& alias) const;
 
   /// Gets pointer to a table if given alias found
   //const std::shared_ptr<NaiveTable> getTablePointer(const std::string& alias);
@@ -121,6 +128,9 @@ public:
 
   /// Returns actual count of tables
   size_t getTablesSize() const;
+
+  /// Returns total count of records in tables
+  size_t getTotalDataSize() const;
 
   /// Returns tables container's iterator to begin
   auto begin()
@@ -145,6 +155,7 @@ private:
   /// Tables access shared lock
   mutable std::shared_timed_mutex tablesLock{};
   /// Tables container
-  std::map<std::string, NaiveTable> tables;
+  std::map<std::string, SharedNaiveTable> tables;
 };
+
 

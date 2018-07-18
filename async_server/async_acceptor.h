@@ -21,9 +21,10 @@ public:
 
   AsyncAcceptor(const asio::ip::address_v4 newAddress,
                 const uint16_t newPortNumber,                
-                asio::io_service& newService,                
+                const SharedService& newService,
                 std::condition_variable& newTerminationNotifier,
                 std::atomic<bool>& newTerminationFlag,
+                std::ostream& newOutputStream,
                 std::ostream& newErrorStream,
                 std::mutex& newOutputLock);
 
@@ -38,7 +39,7 @@ private:
 
   asio::ip::address_v4 address;
   uint16_t portNumber;
-  asio::io_service& service;
+  SharedService service;
   asio::ip::tcp::endpoint endpoint;  
   asio::ip::tcp::acceptor acceptor;  
 
@@ -50,8 +51,10 @@ private:
   std::condition_variable& terminationNotifier;
   std::atomic<bool>& terminationFlag;
 
-  std::atomic_bool shouldExit;
+  std::atomic<bool> isStarted;
+  std::atomic<bool> shouldExit;
 
+  std::ostream& outputStream;
   std::ostream& errorStream;
   std::mutex& outputLock;
 };

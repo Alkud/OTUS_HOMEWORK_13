@@ -8,11 +8,12 @@
 
 using namespace std::chrono_literals;
 
-AsyncReader::AsyncReader(AsyncReader::SharedSocket newSocket,  
+AsyncReader::AsyncReader(AsyncReader::SharedSocket newSocket,
   asio::ip::tcp::acceptor& newAcceptor,
   std::atomic<size_t>& newReaderCounter,
   std::condition_variable& newTerminationNotifier,
   std::mutex& newTerminationLock,
+  std::ostream& newOutputStream,
   std::ostream& newErrorStream,
   std::mutex& newOutputLock,
   std::atomic<bool>& stopFlag
@@ -22,7 +23,9 @@ AsyncReader::AsyncReader(AsyncReader::SharedSocket newSocket,
   acceptor{newAcceptor}, readerCounter{newReaderCounter},
   terminationNotifier{newTerminationNotifier},
   terminationLock{newTerminationLock},
-  errorStream{newErrorStream}, outputLock{newOutputLock},
+  outputStream{newOutputStream},
+  errorStream{newErrorStream},
+  outputLock{newOutputLock},
   sharedThis{},
   shouldExit{stopFlag},
 
@@ -138,13 +141,7 @@ void AsyncReader::doRead()
   {
     if (shouldExit.load() != true && !error)
     {
-      onReading(bytes_transferred, socket);
-
-      #ifdef NDEBUG
-      #else
-        //std::cout << "-- continue doRead\n";
-      #endif
-
+      onReading(bytes_transferred, socket);      
       doRead();
     }
     else
@@ -161,12 +158,30 @@ void AsyncReader::onReading(std::size_t bytes_transferred, SharedSocket socket)
     //std::cout << "-- start onReading\n";
   #endif
 
-  std::istream tempStream{&readBuffer};
-  std::string request{};
-
-  std::copy(std::istream_iterator<std::string>(tempStream),
-            std::istream_iterator<std::string>(),
-            std::back_inserter(request));
+  std::string request{
+    std::istreambuf_iterator<char>(&readBuffer),
+    std::istreambuf_iterator<char>()
+  };
 
   auto reaction(CommandTranslator::translate(request, socket));
+
+  if (std::get<0>(reaction) == DBCommands::EMPTY)
+  {
+    onBadRequest(std::get<1>(reaction));
+  }
+}
+
+void AsyncReader::onBadRequest(std::vector<std::string> arguments)
+{
+  std::string message{arguments[0]};
+
+  asio::async_write(*socket, asio::buffer(message),
+  [this, message](const system::error_code& error, std::size_t bytes_transferred)
+  {
+    if (!error)
+    {
+      std::lock_guard<std::mutex> lockOutput{outputLock};
+      outputStream << message;
+    }
+  });
 }

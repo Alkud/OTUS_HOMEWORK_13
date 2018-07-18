@@ -28,7 +28,9 @@ public:
               std::atomic<size_t>& newReaderCounter,
               std::condition_variable& newTerminationNotifier,
               std::mutex& newTerminationLock,
-              std::ostream& newErrorStream, std::mutex& newOutputLock,
+              std::ostream& newOutputStream,
+              std::ostream& newErrorStream,
+              std::mutex& newOutputLock,
               std::atomic<bool>& stopFlag);
 
   ~AsyncReader();
@@ -43,6 +45,8 @@ private:
 
   void onReading(std::size_t bytes_transferred, SharedSocket socket);
 
+  void onBadRequest(std::vector<std::string> arguments);
+
   SharedSocket socket;  
 
   asio::streambuf readBuffer;
@@ -54,6 +58,7 @@ private:
   std::condition_variable& terminationNotifier;
   std::mutex& terminationLock;
 
+  std::ostream& outputStream;
   std::ostream& errorStream;
   std::mutex& outputLock;
 
