@@ -143,7 +143,7 @@ void DbManager::stop()
 }
 
 
-void DbManager::processRequest(const CommandReaction& request)
+void DbManager::processRequest(const CommandReaction& request, ServerCallback callback)
 {
   if (shouldExit.load() == true)
   {
@@ -179,50 +179,155 @@ void DbManager::buildHandlers()
 {
   /*--------------------------------------------------------------*/
   dispatchingHandlers[DBCommands::EMPTY] = [this](
-    const std::vector<std::string> arguments, const SharedSocket socket)
+    const std::vector<std::string> arguments, const SharedSocket socket, ServerCallback callback)
   {
-    std::string message{arguments[0]};
+    SharedStringVector message { new StringVector ()};
 
-    asio::async_write(*socket, asio::buffer(message),
-    [this](const system::error_code& error, std::size_t bytes_transferred)
-    {
-      if (!error)
-      {
-        std::lock_guard<std::mutex> lockOutput{outputLock};
-      }
-     });
+    message->push_back(arguments[0]);
+
+    callback(message, socket);
   };
 
   /*--------------------------------------------------------------*/
   dispatchingHandlers[DBCommands::INSERT] = [this](
-    const std::vector<std::string> arguments, const SharedSocket socket)
+    const std::vector<std::string> arguments, const SharedSocket socket, ServerCallback callback)
   {
     std::string table{arguments[0]};
     int id{std::stoi(arguments[1])};
     std::string name{arguments[2]};
 
-    std::string message{};
+    SharedStringVector message { new StringVector ()};
 
-    if (storage->insertNameToTable(table, id, name))
+    if (true == storage->insertNameToTable(table, id, name))
     {
-      message = "OK\n";
+      message->push_back("OK\n");
     }
     else
     {
-      message = std::string{"ERR duplicate "} + arguments[1];
+      message->push_back(std::string{"ERR duplicate "} + name + "\n");
     }
 
-    asio::async_write(*socket, asio::buffer(message),
-    [this, message](const system::error_code& error, std::size_t bytes_transferred)
+    callback(message, socket);
+  };
+
+  /*--------------------------------------------------------------*/
+  dispatchingHandlers[DBCommands::INTERSECTION] = [this](
+    const std::vector<std::string> arguments, const SharedSocket socket, ServerCallback callback)
+  {
+    processor->post([this, arguments, socket, callback]()
     {
-      if (!error)
-      {
-        std::lock_guard<std::mutex> lockOutput{outputLock};
-        outputStream << message;
-      }
-     });
+      processingHandlers[DBCommands::INTERSECTION](
+        arguments,socket,callback);
+    });
+  };
+
+  /*--------------------------------------------------------------*/
+  dispatchingHandlers[DBCommands::SYMMETRIC_DIFFERENCE] = [this](
+    const std::vector<std::string> arguments, const SharedSocket socket, ServerCallback callback)
+  {
+    processor->post([this, arguments, socket, callback]()
+    {
+      processingHandlers[DBCommands::INTERSECTION](
+        arguments,socket,callback);
+    });
+  };
+
+  /*--------------------------------------------------------------*/
+  dispatchingHandlers[DBCommands::TRUNCATE] = [this](
+    const std::vector<std::string> arguments, const SharedSocket socket, ServerCallback callback)
+  {
+    std::string table{arguments[0]};
+
+    SharedStringVector message { new StringVector ()};
+
+    if (true == storage->clearTable(table))
+    {
+      message->push_back("OK\n");
+    }
+    else
+    {
+      message->push_back(std::string{"ERR not_found "} + table + "\n");
+    }
+
+    callback(message, socket);
+  };
+
+  /*--------------------------------------------------------------*/
+  processingHandlers[DBCommands::INTERSECTION] = [this](
+    const std::vector<std::string> arguments, const SharedSocket socket, ServerCallback callback)
+  {
+    auto tableA{arguments[0]};
+    auto tableB{arguments[1]};
+
+    SharedStringVector message { new StringVector () };
+
+    if (storage->containsTable(tableA) != true)
+    {
+      message->push_back(std::string{"ERR not_found "} + tableA + "\n");
+      callback(message, socket);
+      return;
+    }
+    else if (storage->containsTable(tableB) != true)
+    {
+      message->push_back(std::string{"ERR not_found "} + tableB + "\n");
+      callback(message, socket);
+      return;
+    }
+
+    auto intersectionResult {storage->getIntersection(tableA, tableB)};
+
+    std::string resultString{};
+
+    for (const auto& resultElement : *intersectionResult)
+    {
+      resultString = std::to_string(resultElement.first) // id
+                     + "," + resultElement.second.first  // table A element
+                     + resultElement.second.second;      // table B element
+
+      message->push_back(resultString);
+    }
+
+    callback(message, socket);
+  };
+
+  processingHandlers[DBCommands::SYMMETRIC_DIFFERENCE] = [this](
+    const std::vector<std::string> arguments, const SharedSocket socket, ServerCallback callback)
+  {
+    auto tableA{arguments[0]};
+    auto tableB{arguments[1]};
+
+    SharedStringVector message { new StringVector () };
+
+    if (storage->containsTable(tableA) != true)
+    {
+      message->push_back(std::string{"ERR not_found "} + tableA + "\n");
+      callback(message, socket);
+      return;
+    }
+    else if (storage->containsTable(tableB) != true)
+    {
+      message->push_back(std::string{"ERR not_found "} + tableB + "\n");
+      callback(message, socket);
+      return;
+    }
+
+    auto intersectionResult {storage->getSymmetricDifference(tableA, tableB)};
+
+    std::string resultString{};
+
+    for (const auto& resultElement : *intersectionResult)
+    {
+      resultString = std::to_string(resultElement.first) // id
+                     + "," + resultElement.second.first  // table A element
+                     + resultElement.second.second;      // table B element
+
+      message->push_back(resultString);
+    }
+
+    callback(message, socket);
   };
 }
+
 
 void DbManager::run(SharedService service) noexcept
 {

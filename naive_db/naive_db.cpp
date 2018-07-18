@@ -60,6 +60,13 @@ bool NaiveTable::insertName(const int id, const std::string& name)
   return data.insert(std::make_pair(id, std::make_shared<std::string>(name))).second;
 }
 
+bool NaiveTable::containsId(const int id)
+{
+  std::shared_lock<std::shared_timed_mutex> lockSelfData{dataLock};
+
+  return data.find(id) != data.end();
+}
+
 std::string NaiveTable::getName(const int id) const
 {
   std::shared_lock<std::shared_timed_mutex> lockSelfData{dataLock};
@@ -175,6 +182,28 @@ bool NaiveDB::insertTable(const std::string& alias, const NaiveTable& table)
   return tables.insert(std::make_pair(alias, std::make_shared<NaiveTable>(table))).second;
 }
 
+bool NaiveDB::containsTable(const std::string& alias)
+{
+  std::shared_lock<std::shared_timed_mutex> lockSelfTables{tablesLock};
+
+  return tables.find(alias) != tables.end();
+}
+
+bool NaiveDB::clearTable(const std::string& alias)
+{
+  std::unique_lock<std::shared_timed_mutex> lockSelfTables{tablesLock};
+
+  if (tables.find(alias) == tables.end())
+  {
+    return false;
+  }
+  else
+  {
+    tables[alias]->clear();
+    return true;
+  }
+}
+
 NaiveTable NaiveDB::getTable(const std::string& alias) const
 {
   std::shared_lock<std::shared_timed_mutex> lockSelfTables{tablesLock};
@@ -228,6 +257,46 @@ std::string NaiveDB::getNameFromTable(const std::string& alias, const int id) co
   else
   {
     return tables.at(alias)->getName(id);
+  }
+}
+
+SharedDbOperationsResultType NaiveDB::getIntersection(const std::string& aliasA, const std::string& aliasB)
+{
+  std::shared_lock<std::shared_timed_mutex> lockSelfTables{tablesLock};
+
+  if (tables.find(aliasA) == tables.end()
+      || tables.find(aliasB) == tables.end())
+  {
+    throw std::out_of_range(WRONG_ALIAS);
+  }
+  else
+  {
+    auto copyTableA{*tables[aliasA]};
+    auto copyTableB{*tables[aliasB]};
+
+    lockSelfTables.unlock();
+
+    return tablesIntersection(copyTableA, copyTableB);
+  }
+}
+
+SharedDbOperationsResultType NaiveDB::getSymmetricDifference(const std::string& aliasA, const std::string& aliasB)
+{
+  std::shared_lock<std::shared_timed_mutex> lockSelfTables{tablesLock};
+
+  if (tables.find(aliasA) == tables.end()
+      || tables.find(aliasB) == tables.end())
+  {
+    throw std::out_of_range(WRONG_ALIAS);
+  }
+  else
+  {
+    auto copyTableA{*tables[aliasA]};
+    auto copyTableB{*tables[aliasB]};
+
+    lockSelfTables.unlock();
+
+    return tablesSymmetricDifference(copyTableA, copyTableB);
   }
 }
 

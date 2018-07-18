@@ -50,6 +50,8 @@ set_target_properties(join_server
 #Link
 target_link_libraries(join_server pthread async_server naive_db ${Boost_LIBRARIES})
 
+target_include_directories(join_server PRIVATE ./async_server)
+
 #Install
 install(TARGETS join_server RUNTIME DESTINATION bin)
 

@@ -2,12 +2,20 @@
 
 #pragma once
 
-#include "naive_db.h"
+#include <map>
+#include <memory>
 
-using OperationsResultType = std::map<int, std::pair<std::string, std::string>>;
+using DbOperationsResultType = std::map<
+  int,
+  std::pair<std::string, std::string>
+>;
 
-OperationsResultType
-tablesIntersection(const NaiveTable& tableA, const NaiveTable& tableB);
+using SharedDbOperationsResultType = std::shared_ptr<
+  DbOperationsResultType
+>;
 
-OperationsResultType
-tablesSymmetricDifference(const NaiveTable& tableA, const NaiveTable& tableB);
+SharedDbOperationsResultType
+tablesIntersection(const class NaiveTable& tableA, const class NaiveTable& tableB);
+
+SharedDbOperationsResultType
+tablesSymmetricDifference(const class NaiveTable& tableA, const class NaiveTable& tableB);

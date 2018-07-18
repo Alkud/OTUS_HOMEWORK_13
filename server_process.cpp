@@ -6,7 +6,7 @@
 #include <atomic>
 #include <condition_variable>
 
-#include "./async_server/async_server.h"
+#include "async_server.h"
 
 std::atomic<bool> shouldExit{false};
 

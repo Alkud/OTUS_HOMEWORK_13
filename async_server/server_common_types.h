@@ -12,6 +12,12 @@ using SharedSocket = std::shared_ptr<asio::ip::tcp::socket>;
 using SharedService = std::shared_ptr<asio::io_service>;
 using UniqueWork = std::unique_ptr<asio::io_service::work>;
 
+using SharedString = std::shared_ptr<std::string>;
+using SharedConstString = std::shared_ptr<const std::string>;
+using StringVector = std::vector<std::string>;
+using SharedStringVector = std::shared_ptr<StringVector>;
+
+
 enum class DBCommands
 {
   INSERT = 0,

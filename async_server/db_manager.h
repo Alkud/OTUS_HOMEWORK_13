@@ -3,13 +3,20 @@
 #include <boost/asio.hpp>
 #include <thread>
 #include <vector>
-#include "server_common_types.h"
 #include "naive_db.h"
+#include "server_common_types.h"
+
 
 const size_t SIZE_THRESHOLD = 1000;
 const size_t DEFAULT_THREAD_COUNT = 2;
 const size_t THREAD_COUNT_INCREMENT = 2;
 
+using UniqueDbManager = std::unique_ptr<class DbManager>;
+
+using ServerCallback = std::function<
+  void(SharedStringVector,
+  SharedSocket)
+>;
 
 class DbManager
 {
@@ -46,16 +53,16 @@ public:
 
   void stop();
 
-  void processRequest(const CommandReaction& request);
+  void processRequest(const CommandReaction& request, ServerCallback callback);
 
 private:
 
   std::map<DBCommands, std::function<
-    void(const std::vector<std::string>, const SharedSocket)>
+    void(const std::vector<std::string>, const SharedSocket, ServerCallback callback)>
   > dispatchingHandlers;
 
   std::map<DBCommands, std::function<
-    void(const std::vector<std::string>, const SharedSocket)>
+    void(const std::vector<std::string>, const SharedSocket, ServerCallback callback)>
   > processingHandlers;
 
   void buildHandlers();

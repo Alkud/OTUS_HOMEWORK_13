@@ -1,4 +1,4 @@
-// db_operations_test.cpp in OTUS Homework 13 project
+// command_translation_test.cpp in OTUS Homework 13 project
 
 #define BOOST_TEST_MODULE OTUS_HW_13_TEST
 
@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(known_commands_test)
 
     expectedReaction = {
       DBCommands::INTERSECTION,
-      {},
+      {"A", "B"},
       testSocket
     };
 
@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(known_commands_test)
 
     expectedReaction = {
       DBCommands::SYMMETRIC_DIFFERENCE,
-      {},
+      {"A", "B"},
       testSocket
     };
 
@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE(unknown_commands_test)
 
     expectedReaction = {
       DBCommands::EMPTY,
-      {"ERR bad request: 'INJECT SomeTable 1 SomeName'\n"},
+      {"ERR bad_request: 'INJECT SomeTable 1 SomeName'\n"},
       testSocket
     };
 
@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(unknown_commands_test)
 
     expectedReaction = {
       DBCommands::EMPTY,
-      {"ERR bad request: 'INTERSECT'\n"},
+      {"ERR bad_request: 'INTERSECT'\n"},
       testSocket
     };
 
@@ -118,7 +118,7 @@ BOOST_AUTO_TEST_CASE(unknown_commands_test)
 
     expectedReaction = {
       DBCommands::EMPTY,
-      {"ERR bad request: 'ASYMMETRIC_DIFFERENCE'\n"},
+      {"ERR bad_request: 'ASYMMETRIC_DIFFERENCE'\n"},
       testSocket
     };
 
@@ -131,7 +131,7 @@ BOOST_AUTO_TEST_CASE(unknown_commands_test)
 
     expectedReaction = {
       DBCommands::EMPTY,
-      {"ERR bad request: 'TRUNCATE'\n"},
+      {"ERR bad_request: 'TRUNCATE'\n"},
       testSocket
     };
 
@@ -141,7 +141,7 @@ BOOST_AUTO_TEST_CASE(unknown_commands_test)
   }
   catch (const std::exception& ex)
   {
-    std::cerr << "copy_table_test failed. " << ex.what();
+    std::cerr << "unknown_commands_test failed. " << ex.what();
     BOOST_FAIL("");
   }
 }
@@ -158,7 +158,7 @@ BOOST_AUTO_TEST_CASE(bad_requests_test)
 
     expectedReaction = {
       DBCommands::EMPTY,
-      {"ERR bad request: 'INSERT SomeTable SomeName'\n"},
+      {"ERR bad_request: 'INSERT SomeTable SomeName'\n"},
       testSocket
     };
 
@@ -171,7 +171,7 @@ BOOST_AUTO_TEST_CASE(bad_requests_test)
 
     expectedReaction = {
       DBCommands::EMPTY,
-      {"ERR bad request: 'INSERT SomeTable SomeId SomeName'\n"},
+      {"ERR bad_request: 'INSERT SomeTable SomeId SomeName'\n"},
       testSocket
     };
 
@@ -184,7 +184,7 @@ BOOST_AUTO_TEST_CASE(bad_requests_test)
 
     expectedReaction = {
       DBCommands::EMPTY,
-      {"ERR bad request: 'INTERSECTION A B'\n"},
+      {"ERR bad_request: 'INTERSECTION A B'\n"},
       testSocket
     };
 
@@ -197,7 +197,7 @@ BOOST_AUTO_TEST_CASE(bad_requests_test)
 
     expectedReaction = {
       DBCommands::EMPTY,
-      {"ERR bad request: 'SYMMETRIC_DIFFERENCE B A'\n"},
+      {"ERR bad_request: 'SYMMETRIC_DIFFERENCE B A'\n"},
       testSocket
     };
 
@@ -210,7 +210,7 @@ BOOST_AUTO_TEST_CASE(bad_requests_test)
 
     expectedReaction = {
       DBCommands::EMPTY,
-      {"ERR bad request: 'TRUNCATE SomeTable please'\n"},
+      {"ERR bad_request: 'TRUNCATE SomeTable please'\n"},
       testSocket
     };
 

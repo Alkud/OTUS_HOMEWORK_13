@@ -52,12 +52,14 @@ CommandReaction CommandTranslator::translate(const std::string& request, SharedS
 
   case static_cast<uint>(DBCommands::INTERSECTION):
     return reactIntersection(
+      "A", "B",
       replySocket
     );
     break;
 
   case static_cast<uint>(DBCommands::SYMMETRIC_DIFFERENCE):
     return reactSymmetricDifference(
+      "A", "B",
       replySocket
     );
     break;
@@ -81,7 +83,7 @@ CommandReaction
 CommandTranslator::reactError(std::string request, SharedSocket socket)
 {
   std::stringstream replyStream{};
-  replyStream << "ERR bad request: " << "\'" << request << "\'\n";
+  replyStream << "ERR bad_request: " << "\'" << request << "\'\n";
 
   std::string reply{replyStream.str()};
   std::vector<std::string> arguments{};
@@ -96,7 +98,8 @@ CommandTranslator::reactError(std::string request, SharedSocket socket)
 };
 
 CommandReaction
-CommandTranslator::reactInsert(const std::string& table,
+CommandTranslator::reactInsert(
+  const std::string& table,
   const std::string& id,
   const std::string& name,
   SharedSocket socket
@@ -116,9 +119,15 @@ CommandTranslator::reactInsert(const std::string& table,
 };
 
 CommandReaction
-CommandTranslator::reactIntersection(SharedSocket socket)
+CommandTranslator::reactIntersection(
+  const std::string& tableA,
+  const std::string& tableB,
+  SharedSocket socket)
 {
   std::vector<std::string> arguments{};
+
+  arguments.push_back(tableA);
+  arguments.push_back(tableB);
 
   DBCommands command {DBCommands::INTERSECTION};
 
@@ -128,9 +137,14 @@ CommandTranslator::reactIntersection(SharedSocket socket)
 };
 
 CommandReaction
-CommandTranslator::reactSymmetricDifference(SharedSocket socket)
+CommandTranslator::reactSymmetricDifference(
+  const std::string& tableA,
+  const std::string& tableB,
+  SharedSocket socket)
 {
   std::vector<std::string> arguments{};
+  arguments.push_back(tableA);
+  arguments.push_back(tableB);
 
   DBCommands command {DBCommands::SYMMETRIC_DIFFERENCE};
 

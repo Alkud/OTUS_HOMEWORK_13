@@ -10,6 +10,7 @@
 #include <boost/asio.hpp>
 #include "async_acceptor.h"
 #include "server_common_types.h"
+#include "db_manager.h"
 
 template<size_t workinThreadCount = 2>
 class AsyncJoinServer
@@ -50,7 +51,23 @@ public:
     newOutputStream,
     newErrorStream,
     outputLock
-  )}
+  )},
+
+  workingThreads{},
+
+  database{ new NaiveDB },
+
+  dbManager{ new DbManager (
+    database,
+    terminationNotifier,
+    dbManagerStopped,
+    outputStream,
+    errorStream,
+    outputLock
+  )
+
+  }
+
   {}
 
   ~AsyncJoinServer()
@@ -142,6 +159,27 @@ public:
     #endif
   }
 
+  void processDbReply(
+    SharedStringVector message,
+    SharedSocket
+  )
+  {
+    asio::async_write(*socket, asio::buffer(*message),
+    [this, message](const system::error_code& error, std::size_t bytes_transferred)
+    {
+      if (!error)
+      {
+        std::lock_guard<std::mutex> lockOutput{outputLock};
+        outputStream << message;
+      }
+     });
+  }
+
+  SharedConstNaiveDB getDB()
+  {
+    return std::const_pointer_cast<const NaiveDB>(database);
+  }
+
   std::mutex& getScreenOutputLock()
   {
     return outputLock;
@@ -184,6 +222,9 @@ private:
   std::unique_ptr<AsyncAcceptor> asyncAcceptor;
 
   std::vector<std::thread> workingThreads;
+
+  SharedNaiveDB database;
+  UniqueDbManager dbManager;
 
   static std::mutex outputLock;
 };

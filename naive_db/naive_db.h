@@ -5,8 +5,10 @@
 #include <memory>
 #include <map>
 #include <set>
+#include <vector>
 #include <unordered_map>
 #include <shared_mutex>
+#include "db_operations.h"
 
 using SharedNaiveTable = std::shared_ptr<class NaiveTable>;
 using SharedConstNaiveTable = std::shared_ptr<const class NaiveTable>;
@@ -16,6 +18,9 @@ using SharedConstNaiveDB = std::shared_ptr<const class NaiveDB>;
 
 using SharedString = std::shared_ptr<std::string>;
 using SharedConstString = std::shared_ptr<const std::string>;
+using StringVector = std::vector<std::string>;
+using SharedStringVector = std::shared_ptr<StringVector>;
+
 
 const std::string WRONG_ID {"wrong_id"};
 
@@ -45,6 +50,9 @@ public:
 
  /// Inserts new record
  bool insertName(const int id, const std::string& name);
+
+ /// Checks if given id is present
+ bool containsId(const int id);
 
  /// Returns a record if given id found
  std::string getName(const int id) const;
@@ -109,22 +117,28 @@ public:
   /// Inserts a copy of existng table if given alias NOT found
   bool insertTable(const std::string& alias, const NaiveTable& table);
 
+  /// Checks if a table with given alias if present
+  bool containsTable(const std::string& alias);
+
+  /// Clear a table if given alias found
+  bool clearTable(const std::string& alias);
+
   /// Returns a copy of table if given alias found
   NaiveTable getTable(const std::string& alias) const ;
   /// Returns pointer to a table if given alias found
   SharedConstNaiveTable operator[](const std::string& alias) const;
-
-  /// Gets pointer to a table if given alias found
-  //const std::shared_ptr<NaiveTable> getTablePointer(const std::string& alias);
-
-  /// Copies a table to destination if given alias found
-  //void makeTableCopy(const std::string& alias, NaiveTable& destination) const;
 
   /// Inserta new record to a table if given alias found
   bool insertNameToTable(const std::string& alias, const int id, const std::string& name);
 
   /// Gets a record from a table if given alias found
   std::string getNameFromTable(const std::string& alias, const int id) const;
+
+  /// Gets result of intersection of two given tables
+  SharedDbOperationsResultType getIntersection(const std::string& aliasA, const std::string& aliasB);
+
+  /// Gets result of symmetric difference of two given tables
+  SharedDbOperationsResultType getSymmetricDifference(const std::string& aliasA, const std::string& aliasB);
 
   /// Returns actual count of tables
   size_t getTablesSize() const;

@@ -236,7 +236,7 @@ BOOST_AUTO_TEST_CASE(intersect_tables_test)
     auto intersectionResult(tablesIntersection(testTableA, testTableB));
 
     std::stringstream testStream{};
-    for (const auto& record : intersectionResult)
+    for (const auto& record : *intersectionResult)
     {
       testStream << record.first << ","
                  << record.second.first << ","
@@ -303,7 +303,7 @@ BOOST_AUTO_TEST_CASE(tables_symmetric_difference_test)
     //    70 | 70             71 | 71
 
 
-    auto symmetricDifferenceResult(tablesSymmetricDifference(testTableA, testTableB));
+    auto symmetricDifferenceResult(*tablesSymmetricDifference(testTableA, testTableB));
 
     std::stringstream testStream{};
     for (const auto& record : symmetricDifferenceResult)

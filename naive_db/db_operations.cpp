@@ -1,9 +1,11 @@
 // db_operations.cpp in Otus homework#13 project
 
 #include "db_operations.h"
-#include <algorithm>
 
-OperationsResultType
+#include <algorithm>
+#include "naive_db.h"
+
+SharedDbOperationsResultType
 tablesIntersection(const NaiveTable& tableA, const NaiveTable& tableB)
 {
   auto indicesA{tableA.getIndices()};
@@ -15,17 +17,17 @@ tablesIntersection(const NaiveTable& tableA, const NaiveTable& tableB)
                         indicesB.begin(), indicesB.end(),
                         std::inserter(commonIndices, commonIndices.begin()));
 
-  OperationsResultType result{};
+  SharedDbOperationsResultType result{ new DbOperationsResultType};
 
   for (const auto idx : commonIndices)
   {
-    result[idx] = std::make_pair(tableA.getName(idx), tableB.getName(idx));
+    (*result)[idx] = std::make_pair(tableA.getName(idx), tableB.getName(idx));
   }
 
   return result;
 }
 
-OperationsResultType
+SharedDbOperationsResultType
 tablesSymmetricDifference(const NaiveTable& tableA, const NaiveTable& tableB)
 {
   auto indicesA{tableA.getIndices()};
@@ -49,16 +51,16 @@ tablesSymmetricDifference(const NaiveTable& tableA, const NaiveTable& tableB)
                       indicesB.begin(), indicesB.end(),
                       std::inserter(missingIndicesB, missingIndicesB.begin()));
 
-  OperationsResultType result{};
+  SharedDbOperationsResultType result{ new DbOperationsResultType};
 
   for (const auto& idx : missingIndicesA)
   {
-    result[idx] = std::make_pair("", tableB.getName(idx));
+    (*result)[idx] = std::make_pair("", tableB.getName(idx));
   }
 
   for (const auto& idx : missingIndicesB)
   {
-    result[idx] = std::make_pair(tableA.getName(idx), "");
+    (*result)[idx] = std::make_pair(tableA.getName(idx), "");
   }
 
   return result;

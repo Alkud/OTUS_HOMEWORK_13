@@ -26,10 +26,14 @@ public:
                SharedSocket socket);
 
   static CommandReaction
-  reactIntersection (SharedSocket socket);
+  reactIntersection (const std::string& tableA,
+                     const std::string& tableB,
+                     SharedSocket socket);
 
   static CommandReaction
-  reactSymmetricDifference (SharedSocket socket);
+  reactSymmetricDifference (const std::string& tableA,
+                            const std::string& tableB,
+                            SharedSocket socket);
 
   static CommandReaction
   reactTruncate (const std::string& table,
