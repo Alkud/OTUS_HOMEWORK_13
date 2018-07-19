@@ -14,4 +14,4 @@ find_package(Boost COMPONENTS system REQUIRED)
 
 target_include_directories(async_server PUBLIC ../naive_db)
 
-target_link_libraries(async_server pthread ${Boost_LIBRARIES})
+target_link_libraries(async_server pthread naive_db ${Boost_LIBRARIES})

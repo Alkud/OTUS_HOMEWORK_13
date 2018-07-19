@@ -12,7 +12,7 @@
 #include "server_common_types.h"
 #include "db_manager.h"
 
-template<size_t workinThreadCount = 2>
+template<size_t workingThreadCount = 2>
 class AsyncJoinServer
 {
 public:
@@ -93,7 +93,7 @@ public:
 
     acceptorStopped.store(false);
 
-    for (size_t idx{0}; idx < workinThreadCount; ++idx)
+    for (size_t idx{0}; idx < workingThreadCount; ++idx)
     {
       workingThreads.push_back(std::thread{&AsyncJoinServer::run, this, service});
     }
@@ -161,7 +161,7 @@ public:
 
   void processDbReply(
     SharedStringVector message,
-    SharedSocket
+    SharedSocket socket
   )
   {
     asio::async_write(*socket, asio::buffer(*message),
@@ -173,6 +173,7 @@ public:
         outputStream << message;
       }
      });
+    socket->shutdown(asio::ip::tcp::socket::shutdown_send);
   }
 
   SharedConstNaiveDB getDB()

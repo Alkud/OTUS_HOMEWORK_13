@@ -14,8 +14,7 @@ const size_t THREAD_COUNT_INCREMENT = 2;
 using UniqueDbManager = std::unique_ptr<class DbManager>;
 
 using ServerCallback = std::function<
-  void(SharedStringVector,
-  SharedSocket)
+  void(SharedStringVector,SharedSocket)
 >;
 
 class DbManager

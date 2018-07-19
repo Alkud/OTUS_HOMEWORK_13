@@ -233,10 +233,10 @@ BOOST_AUTO_TEST_CASE(intersect_tables_test)
     //    34 | 68             34 | 69
     //    35 | 70             35 | 71
 
-    auto intersectionResult(tablesIntersection(testTableA, testTableB));
+    auto intersectionResult(*tablesIntersection(testTableA, testTableB));
 
     std::stringstream testStream{};
-    for (const auto& record : *intersectionResult)
+    for (const auto& record : intersectionResult)
     {
       testStream << record.first << ","
                  << record.second.first << ","

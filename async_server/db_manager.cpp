@@ -120,9 +120,9 @@ void DbManager::stop()
     dispatchingThread.join();
   }
 
-  processor->stop();
+  dispatcher->stop();
 
-  while(processor->stopped() != true)
+  while(dispatcher->stopped() != true)
   {}
 
   processorWork.reset();
@@ -160,6 +160,11 @@ void DbManager::processRequest(const CommandReaction& request, ServerCallback ca
   auto commandCode {std::get<0>(request)};
   auto commandArguments {std::get<1>(request)};
   auto socket {std::get<2>(request)};
+
+  processor->post([this, commandCode, commandArguments, socket, callback]()
+  {
+    processingHandlers[commandCode](commandArguments, socket, callback);
+  });
 }
 
 
