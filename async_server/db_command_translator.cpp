@@ -1,15 +1,15 @@
-#include "command_translator.h"
+#include "db_command_translator.h"
 
 std::map<std::string, std::pair<uint, uint>>
-CommandTranslator::dbCommandCodes
+DbCommandTranslator::dbCommandCodes
 {
-  {"INSERT", {static_cast<uint>(DBCommands::INSERT), 3}},                             // code = 0, number of arguments = 3
-  {"TRUNCATE", {static_cast<uint>(DBCommands::TRUNCATE), 1}},                         // code = 100, number of arguments = 1
-  {"INTERSECTION", {static_cast<uint>(DBCommands::INTERSECTION), 0}},                 // code = 200, number of arguments = 0
-  {"SYMMETRIC_DIFFERENCE", {static_cast<uint>(DBCommands::SYMMETRIC_DIFFERENCE), 0}}, // code = 300, number of arguments = 3
+  {"INSERT", {static_cast<uint>(DbCommands::INSERT), 3}},                             // code = 0, number of arguments = 3
+  {"TRUNCATE", {static_cast<uint>(DbCommands::TRUNCATE), 1}},                         // code = 100, number of arguments = 1
+  {"INTERSECTION", {static_cast<uint>(DbCommands::INTERSECTION), 0}},                 // code = 200, number of arguments = 0
+  {"SYMMETRIC_DIFFERENCE", {static_cast<uint>(DbCommands::SYMMETRIC_DIFFERENCE), 0}}, // code = 300, number of arguments = 3
 };
 
-CommandReaction CommandTranslator::translate(const std::string& request, SharedSocket replySocket)
+DbCommandReaction DbCommandTranslator::translate(const std::string& request, SharedSocket replySocket)
 {
   std::istringstream tempStream{request};
 
@@ -32,7 +32,7 @@ CommandReaction CommandTranslator::translate(const std::string& request, SharedS
 
   switch (commandCode)
   {
-  case static_cast<uint>(DBCommands::INSERT):
+  case static_cast<uint>(DbCommands::INSERT):
     try /* make sure id field is convertible */
     {
       std::stoi(splittedCommand[2]);
@@ -50,21 +50,21 @@ CommandReaction CommandTranslator::translate(const std::string& request, SharedS
     );
     break;
 
-  case static_cast<uint>(DBCommands::INTERSECTION):
+  case static_cast<uint>(DbCommands::INTERSECTION):
     return reactIntersection(
       "A", "B",
       replySocket
     );
     break;
 
-  case static_cast<uint>(DBCommands::SYMMETRIC_DIFFERENCE):
+  case static_cast<uint>(DbCommands::SYMMETRIC_DIFFERENCE):
     return reactSymmetricDifference(
       "A", "B",
       replySocket
     );
     break;
 
-  case static_cast<uint>(DBCommands::TRUNCATE):
+  case static_cast<uint>(DbCommands::TRUNCATE):
     return reactTruncate(splittedCommand[1],
       replySocket
     );
@@ -76,11 +76,54 @@ CommandReaction CommandTranslator::translate(const std::string& request, SharedS
   }
 }
 
+std::string DbCommandTranslator::restore(const DbCommandReaction& reaction)
+{
+  auto commandCode {static_cast<uint>(std::get<0>(reaction))};
+  auto arguments {std::get<1>(reaction)};
+
+  std::stringstream resultStream{};
+
+  switch (commandCode)
+  {
+  case static_cast<uint>(DbCommands::INSERT):
+    resultStream << "INSERT ";
+    break;
+
+  case static_cast<uint>(DbCommands::INTERSECTION):
+    resultStream << "INTERSECTION ";
+    break;
+
+  case static_cast<uint>(DbCommands::SYMMETRIC_DIFFERENCE):
+    resultStream << "SYMMETRIC DIFFERENCE ";
+    break;
+
+  case static_cast<uint>(DbCommands::TRUNCATE):
+    resultStream << "TRUNCATE ";
+    break;
+
+  default:
+    resultStream << "UNKNOWN ";
+    break;
+  }
+
+  for (const auto& arg : arguments)
+  {
+    resultStream << arg << " ";
+  }
+
+  auto result {resultStream.str()};
+
+  /* cut als space symbol*/
+  result = result.substr(0, result.length() - 1);
+
+  return result;
+}
+
 
 /* ------------------------------------------------------------------------------------------------ */
 
-CommandReaction
-CommandTranslator::reactError(std::string request, SharedSocket socket)
+DbCommandReaction
+DbCommandTranslator::reactError(std::string request, SharedSocket socket)
 {
   std::stringstream replyStream{};
   replyStream << "ERR bad_request: " << "\'" << request << "\'\n";
@@ -90,15 +133,15 @@ CommandTranslator::reactError(std::string request, SharedSocket socket)
 
   arguments.push_back(reply);
 
-  DBCommands command {DBCommands::EMPTY};
+  DbCommands command {DbCommands::EMPTY};
 
   auto result{std::make_tuple(command, arguments, socket)};
 
   return result;
 };
 
-CommandReaction
-CommandTranslator::reactInsert(
+DbCommandReaction
+DbCommandTranslator::reactInsert(
   const std::string& table,
   const std::string& id,
   const std::string& name,
@@ -111,15 +154,15 @@ CommandTranslator::reactInsert(
   arguments.push_back(id);
   arguments.push_back(name);
 
-  DBCommands command {DBCommands::INSERT};
+  DbCommands command {DbCommands::INSERT};
 
   auto result{std::make_tuple(command, arguments, socket)};
 
   return result;
 };
 
-CommandReaction
-CommandTranslator::reactIntersection(
+DbCommandReaction
+DbCommandTranslator::reactIntersection(
   const std::string& tableA,
   const std::string& tableB,
   SharedSocket socket)
@@ -129,15 +172,15 @@ CommandTranslator::reactIntersection(
   arguments.push_back(tableA);
   arguments.push_back(tableB);
 
-  DBCommands command {DBCommands::INTERSECTION};
+  DbCommands command {DbCommands::INTERSECTION};
 
   auto result{std::make_tuple(command, arguments, socket)};
 
   return result;
 };
 
-CommandReaction
-CommandTranslator::reactSymmetricDifference(
+DbCommandReaction
+DbCommandTranslator::reactSymmetricDifference(
   const std::string& tableA,
   const std::string& tableB,
   SharedSocket socket)
@@ -146,20 +189,20 @@ CommandTranslator::reactSymmetricDifference(
   arguments.push_back(tableA);
   arguments.push_back(tableB);
 
-  DBCommands command {DBCommands::SYMMETRIC_DIFFERENCE};
+  DbCommands command {DbCommands::SYMMETRIC_DIFFERENCE};
 
   auto result{std::make_tuple(command, arguments, socket)};
 
   return result;
 };
 
-CommandReaction
-CommandTranslator::reactTruncate(const std::string& table, SharedSocket socket)
+DbCommandReaction
+DbCommandTranslator::reactTruncate(const std::string& table, SharedSocket socket)
 {
   std::vector<std::string> arguments{};
   arguments.push_back(table);
 
-  DBCommands command {DBCommands::TRUNCATE};
+  DbCommands command {DbCommands::TRUNCATE};
 
   auto result{std::make_tuple(command, arguments, socket)};
 

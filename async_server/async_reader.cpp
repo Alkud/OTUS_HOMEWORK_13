@@ -4,13 +4,17 @@
 #include <chrono>
 #include <csignal>
 #include <iterator>
-#include "command_translator.h"
+#include <iostream>
+#include "db_command_translator.h"
+#include "db_manager.h"
 
 using namespace std::chrono_literals;
 
 AsyncReader::AsyncReader(AsyncReader::SharedSocket newSocket,
   asio::ip::tcp::acceptor& newAcceptor,
   std::atomic<size_t>& newReaderCounter,
+  const SharedService& newRequestService,
+  ServerRequestCallback newRequestCallback,
   std::condition_variable& newTerminationNotifier,
   std::mutex& newTerminationLock,
   std::ostream& newOutputStream,
@@ -19,13 +23,21 @@ AsyncReader::AsyncReader(AsyncReader::SharedSocket newSocket,
   std::atomic<bool>& stopFlag
 ):
   socket{newSocket},
+
   readBuffer{}, receivedCommand{},
+
   acceptor{newAcceptor}, readerCounter{newReaderCounter},
+
+  requestService{newRequestService},
+  requestCallback{newRequestCallback},
+
   terminationNotifier{newTerminationNotifier},
   terminationLock{newTerminationLock},
+
   outputStream{newOutputStream},
   errorStream{newErrorStream},
   outputLock{newOutputLock},
+
   sharedThis{},
   shouldExit{stopFlag},
 
@@ -64,7 +76,7 @@ void AsyncReader::start()
       {
         std::mutex dummyMutex{};
         std::unique_lock<std::mutex> dummyLock{dummyMutex};
-        controllerNotifier.wait_for(dummyLock, 1s, [this]()
+        controllerNotifier.wait_for(dummyLock, 100ms, [this]()
         {
           return shouldExit.load() == true || stopped.load() == true;
         });
@@ -105,7 +117,7 @@ void AsyncReader::stop()
        //std::cout << "-- reader socket shutdown\n";
       #endif
 
-      socket->shutdown(asio::ip::tcp::socket::shutdown_both);
+      socket->shutdown(asio::ip::tcp::socket::shutdown_receive);
 
       #ifdef NDEBUG
       #else
@@ -158,16 +170,49 @@ void AsyncReader::onReading(std::size_t bytes_transferred, SharedSocket socket)
     //std::cout << "-- start onReading\n";
   #endif
 
-  std::string request{
+//  std::string request{
+//    std::istreambuf_iterator<char>(&readBuffer),
+//    std::istreambuf_iterator<char>()
+//  };
+
+//  auto reaction(DbCommandTranslator::translate(request, socket));
+
+//  if (std::get<0>(reaction) == DbCommands::EMPTY)
+//  {
+//    onBadRequest(std::get<1>(reaction));
+//  }
+
+//  auto sharedReaction {std::make_shared<DbCommandReaction>(reaction)};
+
+//  requestService->post([callback = requestCallback, sharedReaction]()
+//  {
+//    callback(sharedReaction);
+//  });
+
+  std::string fullRequest{
     std::istreambuf_iterator<char>(&readBuffer),
     std::istreambuf_iterator<char>()
   };
 
-  auto reaction(CommandTranslator::translate(request, socket));
+  std::stringstream requestStream{fullRequest};
 
-  if (std::get<0>(reaction) == DBCommands::EMPTY)
+  std::string request{};
+
+  while(std::getline(requestStream, request))
   {
-    onBadRequest(std::get<1>(reaction));
+    auto reaction(DbCommandTranslator::translate(request, socket));
+
+    if (std::get<0>(reaction) == DbCommands::EMPTY)
+    {
+      onBadRequest(std::get<1>(reaction));
+    }
+
+    auto sharedReaction {std::make_shared<DbCommandReaction>(reaction)};
+
+    requestService->post([callback = requestCallback, sharedReaction]()
+    {
+      callback(sharedReaction);
+    });
   }
 }
 
@@ -176,12 +221,15 @@ void AsyncReader::onBadRequest(std::vector<std::string> arguments)
   std::string message{arguments[0]};
 
   asio::async_write(*socket, asio::buffer(message),
-  [this, message](const system::error_code& error, std::size_t bytes_transferred)
+  [&lock = outputLock, &stream = outputStream,
+   sock = socket, message]
+  (const system::error_code& error, std::size_t bytes_transferred)
   {
     if (!error)
     {
-      std::lock_guard<std::mutex> lockOutput{outputLock};
-      outputStream << message;
+      std::lock_guard<std::mutex> lockOutput{lock};
+      stream << message;
     }
+    sock->shutdown(asio::ip::tcp::socket::shutdown_receive);
   });
 }

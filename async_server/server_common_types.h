@@ -18,7 +18,7 @@ using StringVector = std::vector<std::string>;
 using SharedStringVector = std::shared_ptr<StringVector>;
 
 
-enum class DBCommands
+enum class DbCommands
 {
   INSERT = 0,
   TRUNCATE = 100,
@@ -27,8 +27,18 @@ enum class DBCommands
   EMPTY = 12345,
 };
 
-using CommandReaction = std::tuple<
-  DBCommands,                                // DB command code
+using DbCommandReaction = std::tuple<
+  DbCommands,                                // DB command code
   std::vector<std::string>,                  // DB operation arguments to use
   SharedSocket                               // socket to write on termination
+>;
+
+using SharedDbCommandReaction = std::shared_ptr<DbCommandReaction>;
+
+using ServerRequestCallback = std::function<
+  void(const SharedDbCommandReaction&)
+>;
+
+using ServerReplyCallback = std::function<
+  void(const SharedStringVector&, const SharedSocket&)
 >;

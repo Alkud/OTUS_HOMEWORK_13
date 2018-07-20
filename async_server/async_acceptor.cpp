@@ -6,20 +6,28 @@
 #include <vector>
 #include <chrono>
 #include <csignal>
+#include <iostream>
 #include <boost/bind.hpp>
 
 using namespace std::chrono_literals;
 
 AsyncAcceptor::AsyncAcceptor(const asio::ip::address_v4 newAddress,
   const uint16_t newPortNumber,
-  const SharedService& newService,
+  const SharedService& newNetService,
+  const SharedService& newRequestService,
+  ServerRequestCallback newRequestCallback,
   std::condition_variable& newTerminationNotifier,
   std::atomic<bool>& newTerminationFlag,
   std::ostream& newOutputStream, std::ostream& newErrorStream,
   std::mutex& newOutputLock) :
 
-address{newAddress}, portNumber{newPortNumber}, service{newService},
-endpoint{address, portNumber}, acceptor{*service, endpoint},
+address{newAddress}, portNumber{newPortNumber},
+
+netService{newNetService},
+requestService{newRequestService},
+requestCallback{newRequestCallback},
+
+endpoint{address, portNumber}, acceptor{*netService, endpoint},
 
 currentReader{}, activeReaderCount{},
 terminationLock{},
@@ -103,7 +111,7 @@ void AsyncAcceptor::doAccept()
     //std::cout << "-- start doAccept\n";
   #endif
 
-  auto socket {std::make_shared<asio::ip::tcp::socket>(*service)};
+  auto socket {std::make_shared<asio::ip::tcp::socket>(*netService)};
 
   acceptor.async_accept(*socket.get(), [this, socket](const system::error_code& error)
   {
@@ -133,8 +141,9 @@ void AsyncAcceptor::onAcception(SharedSocket acceptedSocket)
   #endif
 
   currentReader.reset( new AsyncReader(
-    acceptedSocket,    
+    acceptedSocket,
     acceptor, activeReaderCount,
+    requestService, requestCallback,
     terminationNotifier, terminationLock,
     outputStream, errorStream,
     outputLock,

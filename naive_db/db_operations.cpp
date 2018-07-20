@@ -21,7 +21,7 @@ tablesIntersection(const NaiveTable& tableA, const NaiveTable& tableB)
 
   for (const auto idx : commonIndices)
   {
-    (*result)[idx] = std::make_pair(tableA.getName(idx), tableB.getName(idx));
+    (*result)[idx] = std::make_pair(tableA.getName(idx).first, tableB.getName(idx).first);
   }
 
   return result;
@@ -55,12 +55,12 @@ tablesSymmetricDifference(const NaiveTable& tableA, const NaiveTable& tableB)
 
   for (const auto& idx : missingIndicesA)
   {
-    (*result)[idx] = std::make_pair("", tableB.getName(idx));
+    (*result)[idx] = std::make_pair("", tableB.getName(idx).first);
   }
 
   for (const auto& idx : missingIndicesB)
   {
-    (*result)[idx] = std::make_pair(tableA.getName(idx), "");
+    (*result)[idx] = std::make_pair(tableA.getName(idx).first, "");
   }
 
   return result;

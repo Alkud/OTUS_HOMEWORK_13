@@ -1,4 +1,5 @@
 #include "db_manager.h"
+#include <iostream>
 
 DbManager::DbManager(SharedNaiveDB&& newStorage,
                      std::condition_variable& newTerminationNotifier,
@@ -91,6 +92,8 @@ void DbManager::start()
 
   isStarted.store(true);
 
+  buildHandlers();
+
   dispatchingThread = std::thread {&DbManager::run, this, dispatcher};
 
   for (size_t idx{0}; idx < DEFAULT_THREAD_COUNT; ++idx)
@@ -142,28 +145,43 @@ void DbManager::stop()
 
 }
 
+void DbManager::adoptDb(const SharedNaiveDB& newDb)
+{
+  storage = newDb;
+}
 
-void DbManager::processRequest(const CommandReaction& request, ServerCallback callback)
+void DbManager::swapDb(SharedNaiveDB& newDb)
+{
+  storage.swap(newDb);
+}
+
+SharedNaiveDB DbManager::getDb()
+{
+  return storage;
+}
+
+
+void DbManager::processRequest(const SharedDbCommandReaction& request, ServerReplyCallback callback)
 {
   if (shouldExit.load() == true)
   {
     return;
   }
 
-  std::unique_lock<std::mutex> lockAccess{accessLock};
+  std::unique_lock<std::mutex> lockAccess{accessLock};  
 
   if (storage->getTotalDataSize() > SIZE_THRESHOLD)
   {
     addProcessingThreads();
   }
 
-  auto commandCode {std::get<0>(request)};
-  auto commandArguments {std::get<1>(request)};
-  auto socket {std::get<2>(request)};
+  auto commandCode {std::get<0>(*request)};
+  auto commandArguments {std::get<1>(*request)};
+  auto socket {std::get<2>(*request)};
 
-  processor->post([this, commandCode, commandArguments, socket, callback]()
+  dispatcher->post([this, commandCode, commandArguments, socket, callback]()
   {
-    processingHandlers[commandCode](commandArguments, socket, callback);
+    dispatchingHandlers[commandCode](commandArguments, socket, callback);
   });
 }
 
@@ -183,8 +201,8 @@ void DbManager::processRequest(const CommandReaction& request, ServerCallback ca
 void DbManager::buildHandlers()
 {
   /*--------------------------------------------------------------*/
-  dispatchingHandlers[DBCommands::EMPTY] = [this](
-    const std::vector<std::string> arguments, const SharedSocket socket, ServerCallback callback)
+  dispatchingHandlers[DbCommands::EMPTY] = [this](
+    const std::vector<std::string> arguments, const SharedSocket socket, ServerReplyCallback callback)
   {
     SharedStringVector message { new StringVector ()};
 
@@ -194,8 +212,8 @@ void DbManager::buildHandlers()
   };
 
   /*--------------------------------------------------------------*/
-  dispatchingHandlers[DBCommands::INSERT] = [this](
-    const std::vector<std::string> arguments, const SharedSocket socket, ServerCallback callback)
+  dispatchingHandlers[DbCommands::INSERT] = [this](
+    const std::vector<std::string> arguments, const SharedSocket socket, ServerReplyCallback callback)
   {
     std::string table{arguments[0]};
     int id{std::stoi(arguments[1])};
@@ -203,43 +221,49 @@ void DbManager::buildHandlers()
 
     SharedStringVector message { new StringVector ()};
 
-    if (true == storage->insertNameToTable(table, id, name))
+    auto insertResult {storage->insertNameToTable(table, id, name)};
+
+    if (DbOpResult::OK == insertResult)
     {
       message->push_back("OK\n");
     }
-    else
+    else if (DbOpResult::ID_DUPLICATE == insertResult)
     {
       message->push_back(std::string{"ERR duplicate "} + name + "\n");
+    }
+    else
+    {
+      message->push_back(std::string{"ERR not_found "} + table + "\n");
     }
 
     callback(message, socket);
   };
 
   /*--------------------------------------------------------------*/
-  dispatchingHandlers[DBCommands::INTERSECTION] = [this](
-    const std::vector<std::string> arguments, const SharedSocket socket, ServerCallback callback)
+  dispatchingHandlers[DbCommands::INTERSECTION] = [this](
+    const std::vector<std::string> arguments, const SharedSocket socket, ServerReplyCallback callback)
   {
     processor->post([this, arguments, socket, callback]()
     {
-      processingHandlers[DBCommands::INTERSECTION](
+      processingHandlers[DbCommands::INTERSECTION](
         arguments,socket,callback);
     });
   };
 
   /*--------------------------------------------------------------*/
-  dispatchingHandlers[DBCommands::SYMMETRIC_DIFFERENCE] = [this](
-    const std::vector<std::string> arguments, const SharedSocket socket, ServerCallback callback)
+  dispatchingHandlers[DbCommands::SYMMETRIC_DIFFERENCE] = [this](
+    const std::vector<std::string> arguments, const SharedSocket socket, ServerReplyCallback callback)
   {
     processor->post([this, arguments, socket, callback]()
     {
-      processingHandlers[DBCommands::INTERSECTION](
+      processingHandlers[DbCommands::INTERSECTION](
         arguments,socket,callback);
     });
   };
 
   /*--------------------------------------------------------------*/
-  dispatchingHandlers[DBCommands::TRUNCATE] = [this](
-    const std::vector<std::string> arguments, const SharedSocket socket, ServerCallback callback)
+  dispatchingHandlers[DbCommands::TRUNCATE] = [this](
+    const std::vector<std::string> arguments, const SharedSocket socket, ServerReplyCallback callback)
   {
     std::string table{arguments[0]};
 
@@ -258,8 +282,8 @@ void DbManager::buildHandlers()
   };
 
   /*--------------------------------------------------------------*/
-  processingHandlers[DBCommands::INTERSECTION] = [this](
-    const std::vector<std::string> arguments, const SharedSocket socket, ServerCallback callback)
+  processingHandlers[DbCommands::INTERSECTION] = [this](
+    const std::vector<std::string> arguments, const SharedSocket socket, ServerReplyCallback callback)
   {
     auto tableA{arguments[0]};
     auto tableB{arguments[1]};
@@ -292,11 +316,13 @@ void DbManager::buildHandlers()
       message->push_back(resultString);
     }
 
+    message->push_back("OK\n");
+
     callback(message, socket);
   };
 
-  processingHandlers[DBCommands::SYMMETRIC_DIFFERENCE] = [this](
-    const std::vector<std::string> arguments, const SharedSocket socket, ServerCallback callback)
+  processingHandlers[DbCommands::SYMMETRIC_DIFFERENCE] = [this](
+    const std::vector<std::string> arguments, const SharedSocket socket, ServerReplyCallback callback)
   {
     auto tableA{arguments[0]};
     auto tableB{arguments[1]};
@@ -328,6 +354,8 @@ void DbManager::buildHandlers()
 
       message->push_back(resultString);
     }
+
+    message->push_back("OK\n");
 
     callback(message, socket);
   };

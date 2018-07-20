@@ -1,6 +1,6 @@
 // db_operations_test.cpp in OTUS Homework 13 project
 
-#define BOOST_TEST_MODULE OTUS_HW_13_TEST
+#define BOOST_TEST_MODULE DB_OPERATIONS_TEST
 
 #include <boost/test/unit_test.hpp>
 #include <sstream>
@@ -18,14 +18,14 @@ BOOST_AUTO_TEST_CASE(create_table_test)
   {
     NaiveTable testTable{};
 
-    BOOST_CHECK(testTable.insertName(12, "Bob") == true);
-    BOOST_CHECK(testTable.insertName(22, "Bill") == true);
+    BOOST_CHECK(testTable.insertName(12, "Bob") == DbOpResult::OK);
+    BOOST_CHECK(testTable.insertName(22, "Bill") == DbOpResult::OK);
 
     BOOST_CHECK(testTable.getDataSize() == 2);
-    BOOST_CHECK(testTable.getName(12) == "Bob");
-    BOOST_CHECK(testTable.getName(22) == "Bill");
+    BOOST_CHECK(testTable.getName(12).first == "Bob");
+    BOOST_CHECK(testTable.getName(22).first == "Bill");
 
-    BOOST_CHECK(testTable.insertName(12, "John") == false);
+    BOOST_CHECK(testTable.insertName(12, "John") == DbOpResult::ID_DUPLICATE);
   }
   catch (const std::exception& ex)
   {
@@ -57,7 +57,7 @@ BOOST_AUTO_TEST_CASE(copy_table_test)
 
     for (int idx{-10}; idx < 10; ++idx)
     {
-      BOOST_CHECK(copyTable.getName(idx) == std::to_string(idx));
+      BOOST_CHECK(copyTable.getName(idx).first == std::to_string(idx));
     }
   }
   catch (const std::exception& ex)
@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE(create_db_test)
       ++tableIdx;
       for (int idx{1}; idx < 15; ++idx)
       {
-        BOOST_CHECK(table.second->getName(idx) == std::to_string(idx));
+        BOOST_CHECK(table.second->getName(idx).first == std::to_string(idx));
       }
     }
   }
@@ -138,7 +138,7 @@ BOOST_AUTO_TEST_CASE(copy_db_test)
     {
       for (int idx{20}; idx < 30; ++idx)
       {
-        BOOST_CHECK(copyDB[std::to_string(tableIdx)]->getName(idx) == std::to_string(idx));
+        BOOST_CHECK(copyDB[std::to_string(tableIdx)]->getName(idx).first == std::to_string(idx));
       }
     }
   }
@@ -337,6 +337,31 @@ BOOST_AUTO_TEST_CASE(tables_symmetric_difference_test)
   catch (const std::exception& ex)
   {
     std::cerr << "tables_symmetric_difference_test failed. " << ex.what();
+    BOOST_FAIL("");
+  }
+}
+
+BOOST_AUTO_TEST_CASE(db_operation_results_test)
+{
+  try
+  {
+    NaiveDB testDB{};
+
+    BOOST_CHECK(testDB.getTable("R").second == DbOpResult::ALIAS_NOT_FOUND);
+
+    testDB.createTable("R");
+
+    BOOST_CHECK(testDB.getTable("R").second == DbOpResult::OK);
+
+    BOOST_CHECK(testDB.getNameFromTable("R", 12).second == DbOpResult::ID_NOT_FOUND);
+
+    testDB.insertNameToTable("R", 12, "Robert");
+
+    BOOST_CHECK(testDB.getNameFromTable("R", 12).second == DbOpResult::OK);
+  }
+  catch (const std::exception& ex)
+  {
+    std::cerr << "db_operation_results_test failed. " << ex.what();
     BOOST_FAIL("");
   }
 }

@@ -38,14 +38,6 @@ NaiveTable& NaiveTable::operator=(NaiveTable&& other)
   return *this;
 }
 
-//void NaiveTable::makeCopy(NaiveTable& destination)
-//{
-//  std::unique_lock<std::shared_timed_mutex> lockSelfData{dataLock};
-//  std::unique_lock<std::shared_timed_mutex> lockDestinationData{destination.dataLock};
-
-//  destination.data = data;
-//}
-
 void NaiveTable::clear()
 {
   std::unique_lock<std::shared_timed_mutex> lockSelfData{dataLock};
@@ -53,11 +45,13 @@ void NaiveTable::clear()
   data.clear();
 }
 
-bool NaiveTable::insertName(const int id, const std::string& name)
+DbOpResult NaiveTable::insertName(const int id, const std::string& name)
 {
   std::unique_lock<std::shared_timed_mutex> lockSelfData{dataLock};
 
-  return data.insert(std::make_pair(id, std::make_shared<std::string>(name))).second;
+  return (data.insert(std::make_pair(
+    id, std::make_shared<std::string>(name)
+  )).second ? DbOpResult::OK : DbOpResult::ID_DUPLICATE);
 }
 
 bool NaiveTable::containsId(const int id)
@@ -67,17 +61,17 @@ bool NaiveTable::containsId(const int id)
   return data.find(id) != data.end();
 }
 
-std::string NaiveTable::getName(const int id) const
+std::pair<std::string, DbOpResult> NaiveTable::getName(const int id) const
 {
   std::shared_lock<std::shared_timed_mutex> lockSelfData{dataLock};
 
   if (data.find(id) == data.end())
   {
-    throw std::out_of_range(WRONG_ID);
+    return {"", DbOpResult::ID_NOT_FOUND};
   }
   else
   {
-    return *data.at(id);
+    return {*data.at(id), DbOpResult::OK};
   }
 }
 
@@ -176,10 +170,12 @@ bool NaiveDB::createTable(const std::string& alias)
   return tables.insert(std::make_pair(alias, std::make_shared<NaiveTable>())).second;
 }
 
-bool NaiveDB::insertTable(const std::string& alias, const NaiveTable& table)
+DbOpResult NaiveDB::insertTable(const std::string& alias, const NaiveTable& table)
 {
   std::unique_lock<std::shared_timed_mutex> lockSelfTables{tablesLock};
-  return tables.insert(std::make_pair(alias, std::make_shared<NaiveTable>(table))).second;
+  return (tables.insert(std::make_pair(
+    alias, std::make_shared<NaiveTable>(table)
+  )).second ? DbOpResult::OK : DbOpResult::ALIAS_DUPLICATE);
 }
 
 bool NaiveDB::containsTable(const std::string& alias)
@@ -204,17 +200,17 @@ bool NaiveDB::clearTable(const std::string& alias)
   }
 }
 
-NaiveTable NaiveDB::getTable(const std::string& alias) const
+std::pair<NaiveTable, DbOpResult> NaiveDB::getTable(const std::string& alias) const
 {
   std::shared_lock<std::shared_timed_mutex> lockSelfTables{tablesLock};
 
   if (tables.find(alias) == tables.end())
   {
-    throw std::out_of_range(WRONG_ALIAS);
+    return {NaiveTable{}, DbOpResult::ALIAS_NOT_FOUND};
   }
   else
   {
-    return *tables.at(alias);
+    return {*tables.at(alias), DbOpResult::OK};
   }
 }
 
@@ -232,13 +228,13 @@ SharedConstNaiveTable NaiveDB::operator[](const std::string& alias) const
   }
 }
 
-bool NaiveDB::insertNameToTable(const std::string& alias, const int id, const std::string& name)
+DbOpResult NaiveDB::insertNameToTable(const std::string& alias, const int id, const std::string& name)
 {
   std::unique_lock<std::shared_timed_mutex> lockSelfTables{tablesLock};
 
   if (tables.find(alias) == tables.end())
   {
-    return false;
+    return DbOpResult::ALIAS_NOT_FOUND;
   }
   else
   {
@@ -246,13 +242,13 @@ bool NaiveDB::insertNameToTable(const std::string& alias, const int id, const st
   }
 }
 
-std::string NaiveDB::getNameFromTable(const std::string& alias, const int id) const
+std::pair<std::string, DbOpResult> NaiveDB::getNameFromTable(const std::string& alias, const int id) const
 {
   std::shared_lock<std::shared_timed_mutex> lockSelfTables{tablesLock};
 
   if (tables.find(alias) == tables.end())
   {
-    throw std::out_of_range(WRONG_ALIAS);;
+    return {"", DbOpResult::ALIAS_NOT_FOUND};
   }
   else
   {

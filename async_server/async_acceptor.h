@@ -20,8 +20,10 @@ public:
   AsyncAcceptor() = delete;
 
   AsyncAcceptor(const asio::ip::address_v4 newAddress,
-                const uint16_t newPortNumber,                
-                const SharedService& newService,
+                const uint16_t newPortNumber,
+                const SharedService& newNetService,
+                const SharedService& newRequestService,
+                ServerRequestCallback newRequestCallback,
                 std::condition_variable& newTerminationNotifier,
                 std::atomic<bool>& newTerminationFlag,
                 std::ostream& newOutputStream,
@@ -39,7 +41,11 @@ private:
 
   asio::ip::address_v4 address;
   uint16_t portNumber;
-  SharedService service;
+
+  SharedService netService;
+  SharedService requestService;
+  ServerRequestCallback requestCallback;
+
   asio::ip::tcp::endpoint endpoint;  
   asio::ip::tcp::acceptor acceptor;  
 

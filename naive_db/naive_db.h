@@ -26,6 +26,15 @@ const std::string WRONG_ID {"wrong_id"};
 
 const std::string WRONG_ALIAS {"wrong_alias"};
 
+enum class DbOpResult
+{
+  OK = 0,
+  ID_NOT_FOUND = 1,
+  ID_DUPLICATE = 2,
+  ALIAS_NOT_FOUND = 3,
+  ALIAS_DUPLICATE = 4,
+};
+
 /// Simple <key, value> table
 class NaiveTable
 {
@@ -49,13 +58,13 @@ public:
  void clear();
 
  /// Inserts new record
- bool insertName(const int id, const std::string& name);
+ DbOpResult insertName(const int id, const std::string& name);
 
  /// Checks if given id is present
  bool containsId(const int id);
 
  /// Returns a record if given id found
- std::string getName(const int id) const;
+ std::pair<std::string, DbOpResult> getName(const int id) const;
  /// Returns result of getName(id)
  SharedConstString operator[](const int id) const;
 
@@ -115,7 +124,7 @@ public:
   bool createTable(const std::string& alias);
 
   /// Inserts a copy of existng table if given alias NOT found
-  bool insertTable(const std::string& alias, const NaiveTable& table);
+  DbOpResult insertTable(const std::string& alias, const NaiveTable& table);
 
   /// Checks if a table with given alias if present
   bool containsTable(const std::string& alias);
@@ -124,15 +133,15 @@ public:
   bool clearTable(const std::string& alias);
 
   /// Returns a copy of table if given alias found
-  NaiveTable getTable(const std::string& alias) const ;
+  std::pair<NaiveTable, DbOpResult> getTable(const std::string& alias) const ;
   /// Returns pointer to a table if given alias found
   SharedConstNaiveTable operator[](const std::string& alias) const;
 
   /// Inserta new record to a table if given alias found
-  bool insertNameToTable(const std::string& alias, const int id, const std::string& name);
+  DbOpResult insertNameToTable(const std::string& alias, const int id, const std::string& name);
 
   /// Gets a record from a table if given alias found
-  std::string getNameFromTable(const std::string& alias, const int id) const;
+  std::pair<std::string, DbOpResult> getNameFromTable(const std::string& alias, const int id) const;
 
   /// Gets result of intersection of two given tables
   SharedDbOperationsResultType getIntersection(const std::string& aliasA, const std::string& aliasB);

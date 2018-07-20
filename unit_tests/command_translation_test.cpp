@@ -1,12 +1,12 @@
 // command_translation_test.cpp in OTUS Homework 13 project
 
-#define BOOST_TEST_MODULE OTUS_HW_13_TEST
+#define BOOST_TEST_MODULE COMMAND_TRANSLATION_TEST
 
 #include <boost/test/unit_test.hpp>
 #include <sstream>
 #include <iostream>
 
-#include "command_translator.h"
+#include "db_command_translator.h"
 
 
 BOOST_AUTO_TEST_SUITE(joinserver_command_translation_test)
@@ -19,18 +19,18 @@ BOOST_AUTO_TEST_CASE(known_commands_test)
   try
   {
     std::string request{};
-    CommandReaction expectedReaction{};
-    CommandReaction actualReaction{};
+    DbCommandReaction expectedReaction{};
+    DbCommandReaction actualReaction{};
 
     request = "INSERT SomeTable 1 SomeName";
 
     expectedReaction = {
-      DBCommands::INSERT,
+      DbCommands::INSERT,
       {"SomeTable", "1", "SomeName"},
       testSocket
     };
 
-    actualReaction = CommandTranslator::translate(request, testSocket);
+    actualReaction = DbCommandTranslator::translate(request, testSocket);
 
     BOOST_CHECK(actualReaction == expectedReaction);
 
@@ -38,12 +38,12 @@ BOOST_AUTO_TEST_CASE(known_commands_test)
     request = "INTERSECTION";
 
     expectedReaction = {
-      DBCommands::INTERSECTION,
+      DbCommands::INTERSECTION,
       {"A", "B"},
       testSocket
     };
 
-    actualReaction = CommandTranslator::translate(request, testSocket);
+    actualReaction = DbCommandTranslator::translate(request, testSocket);
 
     BOOST_CHECK(actualReaction == expectedReaction);
 
@@ -51,12 +51,12 @@ BOOST_AUTO_TEST_CASE(known_commands_test)
     request = "SYMMETRIC_DIFFERENCE";
 
     expectedReaction = {
-      DBCommands::SYMMETRIC_DIFFERENCE,
+      DbCommands::SYMMETRIC_DIFFERENCE,
       {"A", "B"},
       testSocket
     };
 
-    actualReaction = CommandTranslator::translate(request, testSocket);
+    actualReaction = DbCommandTranslator::translate(request, testSocket);
 
     BOOST_CHECK(actualReaction == expectedReaction);
 
@@ -64,12 +64,12 @@ BOOST_AUTO_TEST_CASE(known_commands_test)
     request = "TRUNCATE SomeTable";
 
     expectedReaction = {
-      DBCommands::TRUNCATE,
+      DbCommands::TRUNCATE,
       {"SomeTable"},
       testSocket
     };
 
-    actualReaction = CommandTranslator::translate(request, testSocket);
+    actualReaction = DbCommandTranslator::translate(request, testSocket);
 
     BOOST_CHECK(actualReaction == expectedReaction);
   }
@@ -85,18 +85,18 @@ BOOST_AUTO_TEST_CASE(unknown_commands_test)
   try
   {
     std::string request{};
-    CommandReaction expectedReaction{};
-    CommandReaction actualReaction{};
+    DbCommandReaction expectedReaction{};
+    DbCommandReaction actualReaction{};
 
     request = "INJECT SomeTable 1 SomeName";
 
     expectedReaction = {
-      DBCommands::EMPTY,
+      DbCommands::EMPTY,
       {"ERR bad_request: 'INJECT SomeTable 1 SomeName'\n"},
       testSocket
     };
 
-    actualReaction = CommandTranslator::translate(request, testSocket);
+    actualReaction = DbCommandTranslator::translate(request, testSocket);
 
     BOOST_CHECK(actualReaction == expectedReaction);
 
@@ -104,12 +104,12 @@ BOOST_AUTO_TEST_CASE(unknown_commands_test)
     request = "INTERSECT";
 
     expectedReaction = {
-      DBCommands::EMPTY,
+      DbCommands::EMPTY,
       {"ERR bad_request: 'INTERSECT'\n"},
       testSocket
     };
 
-    actualReaction = CommandTranslator::translate(request, testSocket);
+    actualReaction = DbCommandTranslator::translate(request, testSocket);
 
     BOOST_CHECK(actualReaction == expectedReaction);
 
@@ -117,12 +117,12 @@ BOOST_AUTO_TEST_CASE(unknown_commands_test)
     request = "ASYMMETRIC_DIFFERENCE";
 
     expectedReaction = {
-      DBCommands::EMPTY,
+      DbCommands::EMPTY,
       {"ERR bad_request: 'ASYMMETRIC_DIFFERENCE'\n"},
       testSocket
     };
 
-    actualReaction = CommandTranslator::translate(request, testSocket);
+    actualReaction = DbCommandTranslator::translate(request, testSocket);
 
     BOOST_CHECK(actualReaction == expectedReaction);
 
@@ -130,12 +130,12 @@ BOOST_AUTO_TEST_CASE(unknown_commands_test)
     request = "TRUNCATE";
 
     expectedReaction = {
-      DBCommands::EMPTY,
+      DbCommands::EMPTY,
       {"ERR bad_request: 'TRUNCATE'\n"},
       testSocket
     };
 
-    actualReaction = CommandTranslator::translate(request, testSocket);
+    actualReaction = DbCommandTranslator::translate(request, testSocket);
 
     BOOST_CHECK(actualReaction == expectedReaction);
   }
@@ -151,18 +151,18 @@ BOOST_AUTO_TEST_CASE(bad_requests_test)
   try
   {
     std::string request{};
-    CommandReaction expectedReaction{};
-    CommandReaction actualReaction{};
+    DbCommandReaction expectedReaction{};
+    DbCommandReaction actualReaction{};
 
     request = "INSERT SomeTable SomeName";
 
     expectedReaction = {
-      DBCommands::EMPTY,
+      DbCommands::EMPTY,
       {"ERR bad_request: 'INSERT SomeTable SomeName'\n"},
       testSocket
     };
 
-    actualReaction = CommandTranslator::translate(request, testSocket);
+    actualReaction = DbCommandTranslator::translate(request, testSocket);
 
     BOOST_CHECK(actualReaction == expectedReaction);
 
@@ -170,12 +170,12 @@ BOOST_AUTO_TEST_CASE(bad_requests_test)
     request = "INSERT SomeTable SomeId SomeName";
 
     expectedReaction = {
-      DBCommands::EMPTY,
+      DbCommands::EMPTY,
       {"ERR bad_request: 'INSERT SomeTable SomeId SomeName'\n"},
       testSocket
     };
 
-    actualReaction = CommandTranslator::translate(request, testSocket);
+    actualReaction = DbCommandTranslator::translate(request, testSocket);
 
     BOOST_CHECK(actualReaction == expectedReaction);
 
@@ -183,12 +183,12 @@ BOOST_AUTO_TEST_CASE(bad_requests_test)
     request = "INTERSECTION A B";
 
     expectedReaction = {
-      DBCommands::EMPTY,
+      DbCommands::EMPTY,
       {"ERR bad_request: 'INTERSECTION A B'\n"},
       testSocket
     };
 
-    actualReaction = CommandTranslator::translate(request, testSocket);
+    actualReaction = DbCommandTranslator::translate(request, testSocket);
 
     BOOST_CHECK(actualReaction == expectedReaction);
 
@@ -196,12 +196,12 @@ BOOST_AUTO_TEST_CASE(bad_requests_test)
     request = "SYMMETRIC_DIFFERENCE B A";
 
     expectedReaction = {
-      DBCommands::EMPTY,
+      DbCommands::EMPTY,
       {"ERR bad_request: 'SYMMETRIC_DIFFERENCE B A'\n"},
       testSocket
     };
 
-    actualReaction = CommandTranslator::translate(request, testSocket);
+    actualReaction = DbCommandTranslator::translate(request, testSocket);
 
     BOOST_CHECK(actualReaction == expectedReaction);
 
@@ -209,12 +209,12 @@ BOOST_AUTO_TEST_CASE(bad_requests_test)
     request = "TRUNCATE SomeTable please";
 
     expectedReaction = {
-      DBCommands::EMPTY,
+      DbCommands::EMPTY,
       {"ERR bad_request: 'TRUNCATE SomeTable please'\n"},
       testSocket
     };
 
-    actualReaction = CommandTranslator::translate(request, testSocket);
+    actualReaction = DbCommandTranslator::translate(request, testSocket);
 
     BOOST_CHECK(actualReaction == expectedReaction);
   }

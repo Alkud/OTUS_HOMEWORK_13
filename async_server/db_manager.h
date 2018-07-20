@@ -13,9 +13,6 @@ const size_t THREAD_COUNT_INCREMENT = 2;
 
 using UniqueDbManager = std::unique_ptr<class DbManager>;
 
-using ServerCallback = std::function<
-  void(SharedStringVector,SharedSocket)
->;
 
 class DbManager
 {
@@ -52,16 +49,21 @@ public:
 
   void stop();
 
-  void processRequest(const CommandReaction& request, ServerCallback callback);
+  void adoptDb(const SharedNaiveDB& newDb);
+  void swapDb(SharedNaiveDB& newDb);
+
+  SharedNaiveDB getDb();
+
+  void processRequest(const SharedDbCommandReaction& request, ServerReplyCallback callback);
 
 private:
 
-  std::map<DBCommands, std::function<
-    void(const std::vector<std::string>, const SharedSocket, ServerCallback callback)>
+  std::map<DbCommands, std::function<
+    void(const std::vector<std::string>, const SharedSocket, ServerReplyCallback callback)>
   > dispatchingHandlers;
 
-  std::map<DBCommands, std::function<
-    void(const std::vector<std::string>, const SharedSocket, ServerCallback callback)>
+  std::map<DbCommands, std::function<
+    void(const std::vector<std::string>, const SharedSocket, ServerReplyCallback callback)>
   > processingHandlers;
 
   void buildHandlers();

@@ -26,6 +26,8 @@ public:
   AsyncReader(SharedSocket newSocket,
               asio::ip::tcp::acceptor& newAcceptor,
               std::atomic<size_t>& newReaderCounter,
+              const SharedService& newRequestService,
+              ServerRequestCallback newRequestCallback,
               std::condition_variable& newTerminationNotifier,
               std::mutex& newTerminationLock,
               std::ostream& newOutputStream,
@@ -54,6 +56,9 @@ private:
 
   asio::ip::tcp::acceptor& acceptor;
   std::atomic<size_t>& readerCounter;
+
+  SharedService requestService;
+  ServerRequestCallback requestCallback;
 
   std::condition_variable& terminationNotifier;
   std::mutex& terminationLock;

@@ -10,6 +10,7 @@
 #include <boost/asio.hpp>
 #include "async_acceptor.h"
 #include "server_common_types.h"
+#include "db_command_translator.h"
 #include "db_manager.h"
 
 template<size_t workingThreadCount = 2>
@@ -31,8 +32,11 @@ public:
   outputStream{newOutputStream},
   errorStream{newErrorStream},
 
-  service{ new asio::io_service},
-  work {new asio::io_service::work(*service)},
+  netService{ new asio::io_service},
+  netWork {new asio::io_service::work(*netService)},
+
+  requestService{ new asio::io_service},
+  requestWork {new asio::io_service::work(*requestService)},
 
   isStarted{false},
   shouldExit{false},
@@ -45,7 +49,14 @@ public:
   asyncAcceptor{ new AsyncAcceptor (
     newAddress,
     newPortNumber,    
-    service,
+    netService,
+    requestService,
+
+    [this](const SharedDbCommandReaction& request)
+    {
+      processDbRequest(request);
+    },
+
     terminationNotifier,
     acceptorStopped,
     newOutputStream,
@@ -53,7 +64,8 @@ public:
     outputLock
   )},
 
-  workingThreads{},
+  netThreads{},
+  requestThread{},
 
   database{ new NaiveDB },
 
@@ -64,9 +76,7 @@ public:
     outputStream,
     errorStream,
     outputLock
-  )
-
-  }
+  )}
 
   {}
 
@@ -95,8 +105,12 @@ public:
 
     for (size_t idx{0}; idx < workingThreadCount; ++idx)
     {
-      workingThreads.push_back(std::thread{&AsyncJoinServer::run, this, service});
+      netThreads.push_back(std::thread{&AsyncJoinServer<workingThreadCount>::run, this, netService});
     }
+
+    requestThread = std::thread{&AsyncJoinServer::run, this, requestService};
+
+    dbManager->start();
   }
 
   void stop()
@@ -111,11 +125,39 @@ public:
     #ifdef NDEBUG
     #else
       //std::cout << "-- called Server::stop()\n";
-    #endif    
+    #endif
 
-    std::this_thread::sleep_for(1s);
+    netWork.reset();
 
-    asyncAcceptor->stop();    
+    asyncAcceptor->stop();
+
+    for (auto& thread : netThreads)
+    {
+      if (thread.joinable() == true)
+      {
+        thread.join();
+      }
+    }
+
+    netService->stop();
+
+    while(netService->stopped() != true)
+    {}
+
+
+    requestWork.reset();
+
+    if (requestThread.joinable() == true)
+    {
+      requestThread.join();
+    }
+
+    requestService->stop();
+
+    while(requestService->stopped() != true)
+    {}
+
+    dbManager->stop();
 
     #ifdef NDEBUG
     #else
@@ -136,22 +178,7 @@ public:
       {
         return acceptorStopped.load() == true;
       });
-    }
-
-    work.reset();
-
-    for (auto& thread : workingThreads)
-    {
-      if (thread.joinable() == true)
-      {
-        thread.join();
-      }
-    }
-
-    service->stop();
-
-    while(service->stopped() != true)
-    {}
+    }    
 
     #ifdef NDEBUG
     #else
@@ -159,26 +186,26 @@ public:
     #endif
   }
 
-  void processDbReply(
-    SharedStringVector message,
-    SharedSocket socket
-  )
+  SharedNaiveDB getDb()
   {
-    asio::async_write(*socket, asio::buffer(*message),
-    [this, message](const system::error_code& error, std::size_t bytes_transferred)
-    {
-      if (!error)
-      {
-        std::lock_guard<std::mutex> lockOutput{outputLock};
-        outputStream << message;
-      }
-     });
-    socket->shutdown(asio::ip::tcp::socket::shutdown_send);
+    return database;
   }
 
-  SharedConstNaiveDB getDB()
+  SharedConstNaiveDB getDb() const
   {
     return std::const_pointer_cast<const NaiveDB>(database);
+  }
+
+  void adoptDb(const SharedNaiveDB& newDb)
+  {
+    database = newDb;
+    dbManager->adoptDb(database);
+  }
+
+  void swapDb(SharedNaiveDB& newDb)
+  {
+    database.swap(newDb);
+    dbManager->adoptDb(database);
   }
 
   std::mutex& getScreenOutputLock()
@@ -201,6 +228,39 @@ private:
     }
   }
 
+  void processDbRequest(const SharedDbCommandReaction& request)
+  {
+    std::lock_guard<std::mutex> lockOutput{outputLock};
+    outputStream << "> " << DbCommandTranslator::restore(*request) << "\n";
+
+    dbManager->processRequest(request,
+      [this](const SharedStringVector& message, const SharedSocket& socket)
+    {
+      processDbReply(message, socket);
+    });
+  }
+
+  void processDbReply(
+    const SharedStringVector& message,
+    const SharedSocket& socket
+  )
+  {
+    for (const auto& writeString : *message)
+    {
+      asio::async_write(*socket, asio::buffer(writeString),
+      [this, writeString, socket](const system::error_code& error, std::size_t bytes_transferred)
+      {
+        if (!error)
+        {
+          std::lock_guard<std::mutex> lockOutput{outputLock};
+          outputStream << "< " << writeString;
+
+          socket->shutdown(asio::ip::tcp::socket::shutdown_send);
+        }
+      });
+    }
+  }
+
 
   asio::ip::address_v4 address;
   uint16_t portNumber;
@@ -208,8 +268,11 @@ private:
   std::ostream& outputStream;
   std::ostream& errorStream;
 
-  SharedService service;
-  UniqueWork work;
+  SharedService netService;
+  UniqueWork netWork;
+
+  SharedService requestService;
+  UniqueWork requestWork;
 
 
   std::atomic<bool> isStarted;
@@ -222,7 +285,8 @@ private:
 
   std::unique_ptr<AsyncAcceptor> asyncAcceptor;
 
-  std::vector<std::thread> workingThreads;
+  std::vector<std::thread> netThreads;
+  std::thread requestThread;
 
   SharedNaiveDB database;
   UniqueDbManager dbManager;
@@ -230,5 +294,5 @@ private:
   static std::mutex outputLock;
 };
 
-template<size_t workinThreadCount>
-std::mutex AsyncJoinServer<workinThreadCount>::outputLock {};
+template<size_t workingThreadCount>
+std::mutex AsyncJoinServer<workingThreadCount>::outputLock {};

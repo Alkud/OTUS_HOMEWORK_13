@@ -7,7 +7,7 @@ add_library(async_server
   async_acceptor.h async_acceptor.cpp
   async_reader.h async_reader.cpp
   db_manager.h db_manager.cpp
-  command_translator.h command_translator.cpp
+  db_command_translator.h db_command_translator.cpp
 )
 
 find_package(Boost COMPONENTS system REQUIRED)
