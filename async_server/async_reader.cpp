@@ -117,7 +117,7 @@ void AsyncReader::stop()
        //std::cout << "-- reader socket shutdown\n";
       #endif
 
-      socket->shutdown(asio::ip::tcp::socket::shutdown_receive);
+      //socket->shutdown(asio::ip::tcp::socket::shutdown_receive);
 
       #ifdef NDEBUG
       #else
@@ -200,6 +200,12 @@ void AsyncReader::onReading(std::size_t bytes_transferred, SharedSocket socket)
 
   while(std::getline(requestStream, request))
   {
+    /* ignore empty commands */
+    if (request.empty() == true)
+    {
+      continue;
+    }
+
     auto reaction(DbCommandTranslator::translate(request, socket));
 
     if (std::get<0>(reaction) == DbCommands::EMPTY)
@@ -214,6 +220,8 @@ void AsyncReader::onReading(std::size_t bytes_transferred, SharedSocket socket)
       callback(sharedReaction);
     });
   }
+
+  //stop();
 }
 
 void AsyncReader::onBadRequest(std::vector<std::string> arguments)
@@ -230,6 +238,8 @@ void AsyncReader::onBadRequest(std::vector<std::string> arguments)
       std::lock_guard<std::mutex> lockOutput{lock};
       stream << message;
     }
-    sock->shutdown(asio::ip::tcp::socket::shutdown_receive);
+    //sock->shutdown(asio::ip::tcp::socket::shutdown_receive);
   });
+
+  stop();
 }

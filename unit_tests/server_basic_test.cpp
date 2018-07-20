@@ -59,9 +59,9 @@ void sendGroupTestRequest(const StringVector& groupRequest, asio::ip::tcp::socke
     /* send request string */
     asio::write(socket, asio::buffer(command.c_str(), command.size()));
     requestStream << command;
-  }  
+  }
 
-  socket.shutdown(asio::ip::tcp::socket::shutdown_send);
+  //socket.shutdown(asio::ip::tcp::socket::shutdown_send);
 }
 
 void sendTestRequest(const std::string& request, asio::ip::tcp::socket& socket)
@@ -75,7 +75,7 @@ void sendTestRequest(const std::string& request, asio::ip::tcp::socket& socket)
 
   /* send request string */
   asio::write(socket, asio::buffer(request.c_str(), request.size()));
-  socket.shutdown(asio::ip::tcp::socket::shutdown_send);
+  //socket.shutdown(asio::ip::tcp::socket::shutdown_send);
 }
 
 
@@ -95,6 +95,8 @@ void receiveTestReply(StringVector& reply, asio::ip::tcp::socket& socket)
               std::ostream_iterator<char>(replyStream));
   }
   while (0 == errorCode);  
+
+  //socket.shutdown(asio::ip::tcp::socket::shutdown_receive);
 
   std::string replyString{};
 
@@ -179,7 +181,7 @@ void checkServerRequest(const StringVector& request,
 
   std::vector<std::string> testReply{};
 
-  getGroupServerOutput(request, testReply, debug);
+  getServerOutput(request, testReply, debug);
 
   std::string actualCout{testOutputStream.str()};
   std::string actualErrOut{testErrorStream.str()};

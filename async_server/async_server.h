@@ -255,7 +255,9 @@ private:
           std::lock_guard<std::mutex> lockOutput{outputLock};
           outputStream << "< " << writeString;
 
-          socket->shutdown(asio::ip::tcp::socket::shutdown_send);
+          //outputStream << "socket use count: " << socket.use_count() << "\n";
+
+          //socket->shutdown(asio::ip::tcp::socket::shutdown_send);
         }
       });
     }

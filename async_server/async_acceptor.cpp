@@ -152,6 +152,8 @@ void AsyncAcceptor::onAcception(SharedSocket acceptedSocket)
 
   currentReader->start();
 
+  currentReader.reset();
+
   if (shouldExit.load() != true)
   {
     doAccept();

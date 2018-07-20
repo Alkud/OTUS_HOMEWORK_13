@@ -38,6 +38,9 @@ int serverRun(int argc, char* argv[], std::ostream& outputStream,
     outputStream, errorStream
   };
 
+  server.getDb()->createTable("A");
+  server.getDb()->createTable("B");
+
   std::thread mainThread{[&server]()
    {
       server.start();

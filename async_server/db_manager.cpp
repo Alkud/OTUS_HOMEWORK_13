@@ -202,7 +202,7 @@ void DbManager::buildHandlers()
 {
   /*--------------------------------------------------------------*/
   dispatchingHandlers[DbCommands::EMPTY] = [this](
-    const std::vector<std::string> arguments, const SharedSocket socket, ServerReplyCallback callback)
+    const std::vector<std::string>& arguments, const SharedSocket& socket, ServerReplyCallback callback)
   {
     SharedStringVector message { new StringVector ()};
 
@@ -213,7 +213,7 @@ void DbManager::buildHandlers()
 
   /*--------------------------------------------------------------*/
   dispatchingHandlers[DbCommands::INSERT] = [this](
-    const std::vector<std::string> arguments, const SharedSocket socket, ServerReplyCallback callback)
+    const std::vector<std::string>& arguments, const SharedSocket& socket, ServerReplyCallback callback)
   {
     std::string table{arguments[0]};
     int id{std::stoi(arguments[1])};
@@ -241,7 +241,7 @@ void DbManager::buildHandlers()
 
   /*--------------------------------------------------------------*/
   dispatchingHandlers[DbCommands::INTERSECTION] = [this](
-    const std::vector<std::string> arguments, const SharedSocket socket, ServerReplyCallback callback)
+    const std::vector<std::string>& arguments, const SharedSocket& socket, ServerReplyCallback callback)
   {
     processor->post([this, arguments, socket, callback]()
     {
@@ -252,7 +252,7 @@ void DbManager::buildHandlers()
 
   /*--------------------------------------------------------------*/
   dispatchingHandlers[DbCommands::SYMMETRIC_DIFFERENCE] = [this](
-    const std::vector<std::string> arguments, const SharedSocket socket, ServerReplyCallback callback)
+    const std::vector<std::string>& arguments, const SharedSocket& socket, ServerReplyCallback callback)
   {
     processor->post([this, arguments, socket, callback]()
     {
@@ -263,7 +263,7 @@ void DbManager::buildHandlers()
 
   /*--------------------------------------------------------------*/
   dispatchingHandlers[DbCommands::TRUNCATE] = [this](
-    const std::vector<std::string> arguments, const SharedSocket socket, ServerReplyCallback callback)
+    const std::vector<std::string>& arguments, const SharedSocket& socket, ServerReplyCallback callback)
   {
     std::string table{arguments[0]};
 
@@ -283,7 +283,7 @@ void DbManager::buildHandlers()
 
   /*--------------------------------------------------------------*/
   processingHandlers[DbCommands::INTERSECTION] = [this](
-    const std::vector<std::string> arguments, const SharedSocket socket, ServerReplyCallback callback)
+    const std::vector<std::string>& arguments, const SharedSocket& socket, ServerReplyCallback callback)
   {
     auto tableA{arguments[0]};
     auto tableB{arguments[1]};
@@ -322,7 +322,7 @@ void DbManager::buildHandlers()
   };
 
   processingHandlers[DbCommands::SYMMETRIC_DIFFERENCE] = [this](
-    const std::vector<std::string> arguments, const SharedSocket socket, ServerReplyCallback callback)
+    const std::vector<std::string>& arguments, const SharedSocket& socket, ServerReplyCallback callback)
   {
     auto tableA{arguments[0]};
     auto tableB{arguments[1]};

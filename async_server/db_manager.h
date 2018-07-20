@@ -13,6 +13,11 @@ const size_t THREAD_COUNT_INCREMENT = 2;
 
 using UniqueDbManager = std::unique_ptr<class DbManager>;
 
+using DbHandlerType = std::function<
+  void(const std::vector<std::string>&,
+  const SharedSocket&,
+  ServerReplyCallback callback)>;
+
 
 class DbManager
 {
@@ -58,13 +63,9 @@ public:
 
 private:
 
-  std::map<DbCommands, std::function<
-    void(const std::vector<std::string>, const SharedSocket, ServerReplyCallback callback)>
-  > dispatchingHandlers;
+  std::map<DbCommands, DbHandlerType> dispatchingHandlers;
 
-  std::map<DbCommands, std::function<
-    void(const std::vector<std::string>, const SharedSocket, ServerReplyCallback callback)>
-  > processingHandlers;
+  std::map<DbCommands, DbHandlerType> processingHandlers;
 
   void buildHandlers();
 
