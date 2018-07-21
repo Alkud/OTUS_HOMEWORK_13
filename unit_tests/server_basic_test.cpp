@@ -1,4 +1,4 @@
-// command_translation_test.cpp in OTUS Homework 13 project
+// server_basic_test.cpp in OTUS Homework 13 project
 
 #define BOOST_TEST_MODULE BASIC_SERVER_TEST
 
@@ -184,11 +184,11 @@ void checkServerRequest(
 
   std::vector<std::string> testReply{};
 
-  if (true == groupRequest) // send all commands at once
+  if (true == groupRequest) // send all commands with no gaps, then receive all replies
   {
     getGroupServerOutput(request, testReply, debug);
   }
-  else // send a command, wait sendInterval milliseconds for reply
+  else // send a command, receive a reply, wait sendInterval milliseconds
   {
     getServerOutput(request, testReply, debug, sendInterval);
   }
@@ -281,7 +281,7 @@ BOOST_AUTO_TEST_CASE(insert_record_test)
   }
   catch (const std::exception& ex)
   {
-    std::cerr << "insert__recird_test failed. " << ex.what();
+    std::cerr << "insert_record_test failed. " << ex.what();
     BOOST_FAIL("");
   }
 }
