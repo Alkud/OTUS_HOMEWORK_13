@@ -24,7 +24,7 @@ AsyncReader::AsyncReader(AsyncReader::SharedSocket newSocket,
 ):
   socket{newSocket},
 
-  readBuffer{}, receivedCommand{},
+  readBuffer{}, requestBuffer{},
 
   acceptor{newAcceptor}, readerCounter{newReaderCounter},
 
@@ -153,7 +153,10 @@ void AsyncReader::doRead()
   {
     if (shouldExit.load() != true && !error)
     {
-      onReading(bytes_transferred, socket);      
+      onReading(bytes_transferred, socket);
+
+      //std::cout << "-- repeat doRead\n";
+
       doRead();
     }
     else
@@ -168,78 +171,87 @@ void AsyncReader::onReading(std::size_t bytes_transferred, SharedSocket socket)
   #ifdef NDEBUG
   #else
     //std::cout << "-- start onReading\n";
-  #endif
+  #endif  
 
-//  std::string request{
-//    std::istreambuf_iterator<char>(&readBuffer),
-//    std::istreambuf_iterator<char>()
-//  };
-
-//  auto reaction(DbCommandTranslator::translate(request, socket));
-
-//  if (std::get<0>(reaction) == DbCommands::EMPTY)
-//  {
-//    onBadRequest(std::get<1>(reaction));
-//  }
-
-//  auto sharedReaction {std::make_shared<DbCommandReaction>(reaction)};
-
-//  requestService->post([callback = requestCallback, sharedReaction]()
-//  {
-//    callback(sharedReaction);
-//  });
 
   std::string fullRequest{
     std::istreambuf_iterator<char>(&readBuffer),
     std::istreambuf_iterator<char>()
   };
 
-  std::stringstream requestStream{fullRequest};
+  requestBuffer << fullRequest;
 
   std::string request{};
 
-  while(std::getline(requestStream, request))
+  //std::cout << "-- onReading pre while\n";
+
+  for(;;)
   {
+    std::getline(requestBuffer, request);
+    //std::cout << "-- onReading inside while\n";
+
     /* ignore empty commands */
     if (request.empty() == true)
     {
       continue;
     }
 
-    auto reaction(DbCommandTranslator::translate(request, socket));
-
-    if (std::get<0>(reaction) == DbCommands::EMPTY)
+    requestBuffer.peek();
+    if (requestBuffer.good() != true)
     {
-      onBadRequest(std::get<1>(reaction));
+      if (fullRequest.back() != '\n')
+      {
+        requestBuffer.clear();
+        requestBuffer << request;
+        break;
+      }
+      else
+      {
+        requestBuffer.clear();
+        processRequest(request);
+        break;
+      }
     }
+    processRequest(request);
+  }
+}
 
-    auto sharedReaction {std::make_shared<DbCommandReaction>(reaction)};
+void AsyncReader::processRequest(const std::string& request)
+{
+  auto reaction(DbCommandTranslator::translate(request, socket));
 
-    requestService->post([callback = requestCallback, sharedReaction]()
-    {
-      callback(sharedReaction);
-    });
+  if (std::get<0>(reaction) == DbCommands::EMPTY)
+  {
+    std::lock_guard<std::mutex> lockOutput{outputLock};
+    outputStream << "> " << request << "\n";
+
+    onBadRequest(std::get<1>(reaction));
+
+    return;
   }
 
-  //stop();
+  auto sharedReaction {std::make_shared<DbCommandReaction>(reaction)};
+
+  //std::cout << "post serever request" << request << "\n";
+  requestService->post([callback = requestCallback, sharedReaction]()
+  {
+    callback(sharedReaction);
+  });
 }
 
 void AsyncReader::onBadRequest(std::vector<std::string> arguments)
 {
-  std::string message{arguments[0]};
+  std::string message{arguments[0]};  
 
   asio::async_write(*socket, asio::buffer(message),
   [&lock = outputLock, &stream = outputStream,
-   sock = socket, message]
+   message]
   (const system::error_code& error, std::size_t bytes_transferred)
   {
     if (!error)
     {
       std::lock_guard<std::mutex> lockOutput{lock};
-      stream << message;
-    }
-    //sock->shutdown(asio::ip::tcp::socket::shutdown_receive);
+      stream << "< " << message;
+    }    
   });
-
-  stop();
 }

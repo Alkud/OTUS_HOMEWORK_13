@@ -229,7 +229,7 @@ void DbManager::buildHandlers()
     }
     else if (DbOpResult::ID_DUPLICATE == insertResult)
     {
-      message->push_back(std::string{"ERR duplicate "} + name + "\n");
+      message->push_back(std::string{"ERR duplicate "} + arguments[1] + "\n");
     }
     else
     {
@@ -256,7 +256,7 @@ void DbManager::buildHandlers()
   {
     processor->post([this, arguments, socket, callback]()
     {
-      processingHandlers[DbCommands::INTERSECTION](
+      processingHandlers[DbCommands::SYMMETRIC_DIFFERENCE](
         arguments,socket,callback);
     });
   };
@@ -309,9 +309,9 @@ void DbManager::buildHandlers()
 
     for (const auto& resultElement : *intersectionResult)
     {
-      resultString = std::to_string(resultElement.first) // id
-                     + "," + resultElement.second.first  // table A element
-                     + resultElement.second.second;      // table B element
+      resultString = std::to_string(resultElement.first)          // id
+                     + "," + resultElement.second.first           // table A element
+                     + "," + resultElement.second.second + "\n";  // table B element
 
       message->push_back(resultString);
     }
@@ -342,15 +342,15 @@ void DbManager::buildHandlers()
       return;
     }
 
-    auto intersectionResult {storage->getSymmetricDifference(tableA, tableB)};
+    auto symmetricDifferenceResult {storage->getSymmetricDifference(tableA, tableB)};
 
     std::string resultString{};
 
-    for (const auto& resultElement : *intersectionResult)
+    for (const auto& resultElement : *symmetricDifferenceResult)
     {
-      resultString = std::to_string(resultElement.first) // id
-                     + "," + resultElement.second.first  // table A element
-                     + resultElement.second.second;      // table B element
+      resultString = std::to_string(resultElement.first)          // id
+                     + "," + resultElement.second.first           // table A element
+                     + "," + resultElement.second.second + "\n";  // table B element
 
       message->push_back(resultString);
     }

@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE(unknown_commands_test)
 
     expectedReaction = {
       DbCommands::EMPTY,
-      {"ERR bad_request: 'INJECT SomeTable 1 SomeName'\n"},
+      {"ERR bad_request 'INJECT SomeTable 1 SomeName'\n"},
       testSocket
     };
 
@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(unknown_commands_test)
 
     expectedReaction = {
       DbCommands::EMPTY,
-      {"ERR bad_request: 'INTERSECT'\n"},
+      {"ERR bad_request 'INTERSECT'\n"},
       testSocket
     };
 
@@ -118,7 +118,7 @@ BOOST_AUTO_TEST_CASE(unknown_commands_test)
 
     expectedReaction = {
       DbCommands::EMPTY,
-      {"ERR bad_request: 'ASYMMETRIC_DIFFERENCE'\n"},
+      {"ERR bad_request 'ASYMMETRIC_DIFFERENCE'\n"},
       testSocket
     };
 
@@ -131,7 +131,7 @@ BOOST_AUTO_TEST_CASE(unknown_commands_test)
 
     expectedReaction = {
       DbCommands::EMPTY,
-      {"ERR bad_request: 'TRUNCATE'\n"},
+      {"ERR bad_request 'TRUNCATE'\n"},
       testSocket
     };
 
@@ -158,7 +158,7 @@ BOOST_AUTO_TEST_CASE(bad_requests_test)
 
     expectedReaction = {
       DbCommands::EMPTY,
-      {"ERR bad_request: 'INSERT SomeTable SomeName'\n"},
+      {"ERR bad_request 'INSERT SomeTable SomeName'\n"},
       testSocket
     };
 
@@ -171,7 +171,7 @@ BOOST_AUTO_TEST_CASE(bad_requests_test)
 
     expectedReaction = {
       DbCommands::EMPTY,
-      {"ERR bad_request: 'INSERT SomeTable SomeId SomeName'\n"},
+      {"ERR bad_request 'INSERT SomeTable SomeId SomeName'\n"},
       testSocket
     };
 
@@ -184,7 +184,7 @@ BOOST_AUTO_TEST_CASE(bad_requests_test)
 
     expectedReaction = {
       DbCommands::EMPTY,
-      {"ERR bad_request: 'INTERSECTION A B'\n"},
+      {"ERR bad_request 'INTERSECTION A B'\n"},
       testSocket
     };
 
@@ -197,7 +197,7 @@ BOOST_AUTO_TEST_CASE(bad_requests_test)
 
     expectedReaction = {
       DbCommands::EMPTY,
-      {"ERR bad_request: 'SYMMETRIC_DIFFERENCE B A'\n"},
+      {"ERR bad_request 'SYMMETRIC_DIFFERENCE B A'\n"},
       testSocket
     };
 
@@ -210,7 +210,7 @@ BOOST_AUTO_TEST_CASE(bad_requests_test)
 
     expectedReaction = {
       DbCommands::EMPTY,
-      {"ERR bad_request: 'TRUNCATE SomeTable please'\n"},
+      {"ERR bad_request 'TRUNCATE SomeTable please'\n"},
       testSocket
     };
 

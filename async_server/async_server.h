@@ -236,6 +236,7 @@ private:
     dbManager->processRequest(request,
       [this](const SharedStringVector& message, const SharedSocket& socket)
     {
+      //std::cout << "process db request" << (*message)[0] << "\n";
       processDbReply(message, socket);
     });
   }

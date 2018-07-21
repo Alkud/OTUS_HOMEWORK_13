@@ -94,7 +94,7 @@ std::string DbCommandTranslator::restore(const DbCommandReaction& reaction)
     break;
 
   case static_cast<uint>(DbCommands::SYMMETRIC_DIFFERENCE):
-    resultStream << "SYMMETRIC DIFFERENCE ";
+    resultStream << "SYMMETRIC_DIFFERENCE ";
     break;
 
   case static_cast<uint>(DbCommands::TRUNCATE):
@@ -106,9 +106,12 @@ std::string DbCommandTranslator::restore(const DbCommandReaction& reaction)
     break;
   }
 
-  for (const auto& arg : arguments)
+  auto commandName{resultStream.str()};
+  commandName = commandName.substr(0, commandName.length() - 1);
+
+  for (size_t idx {0}; idx < dbCommandCodes[commandName].second; ++idx)
   {
-    resultStream << arg << " ";
+    resultStream << arguments[idx] << " ";
   }
 
   auto result {resultStream.str()};
@@ -126,7 +129,7 @@ DbCommandReaction
 DbCommandTranslator::reactError(std::string request, SharedSocket socket)
 {
   std::stringstream replyStream{};
-  replyStream << "ERR bad_request: " << "\'" << request << "\'\n";
+  replyStream << "ERR bad_request " << "\'" << request << "\'\n";
 
   std::string reply{replyStream.str()};
   std::vector<std::string> arguments{};

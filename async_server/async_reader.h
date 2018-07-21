@@ -47,12 +47,14 @@ private:
 
   void onReading(std::size_t bytes_transferred, SharedSocket socket);
 
+  void processRequest(const std::string& request);
+
   void onBadRequest(std::vector<std::string> arguments);
 
   SharedSocket socket;  
 
   asio::streambuf readBuffer;
-  std::vector<std::string> receivedCommand;
+  std::stringstream requestBuffer;
 
   asio::ip::tcp::acceptor& acceptor;
   std::atomic<size_t>& readerCounter;

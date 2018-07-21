@@ -72,7 +72,7 @@ void sendTestRequest(const std::string& request, asio::ip::tcp::socket& socket)
   }
 
   /* send request string */
-  asio::write(socket, asio::buffer(request.c_str(), request.size()));  
+  asio::write(socket, asio::buffer(request.c_str(), request.size()));
 }
 
 
@@ -132,7 +132,7 @@ void getGroupServerOutput(const StringVector& request, StringVector& reply, Debu
     {
       std::cout << "< " << string;
     }
-  }  
+  }
 }
 
 void getServerOutput(const StringVector& request, StringVector& reply,
