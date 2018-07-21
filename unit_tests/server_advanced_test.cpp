@@ -20,10 +20,7 @@ std::stringstream testErrorStream{};
 
 asio::io_service testAsioService{};
 
-std::thread testWorkingThread{[]()
-{
-  testAsioService.run();
-}};
+std::vector<std::thread> testWorkingThreads{};
 
 UniqueWork testWork { new asio::io_service::work(testAsioService)};
 
@@ -48,7 +45,8 @@ AsyncJoinServer<2> testServer {
 };
 
 void sendGroupTestRequest(const std::vector<StringVector>& groupRequests,
-                          std::vector<asio::ip::tcp::socket>& sockets)
+                          std::vector<asio::ip::tcp::socket>& sockets,
+                          const bool delayRequests)
 {
   auto threadCount {groupRequests.size()};
 
@@ -56,6 +54,11 @@ void sendGroupTestRequest(const std::vector<StringVector>& groupRequests,
 
   for (size_t idx{0}; idx < threadCount; ++idx)
   {
+    if (delayRequests)
+    {
+      std::this_thread::sleep_for(50ms);
+    }
+
     sendingThreads.push_back(std::thread{[&groupRequest = groupRequests[idx],
                                           &socket = sockets[idx]]()
     {
@@ -69,6 +72,8 @@ void sendGroupTestRequest(const std::vector<StringVector>& groupRequests,
       {
         /* send request string */
         asio::write(socket, asio::buffer(command.c_str(), command.size()));
+        std::this_thread::sleep_for(10ms);
+
         requestStream << command;
       }
     }
@@ -84,89 +89,132 @@ void sendGroupTestRequest(const std::vector<StringVector>& groupRequests,
   }
 }
 
-void sendTestRequest(const std::string& request, asio::ip::tcp::socket& socket)
-{
-  /*connect to testServer*/
-  asio::ip::tcp::endpoint endpoint{testAddress, testPortNumber};
-  if (socket.is_open() != true)
-  {
-    socket.connect(endpoint);
-  }
-
-  /* send request string */
-  asio::write(socket, asio::buffer(request.c_str(), request.size()));
-}
-
 
 void receiveTestReply(std::vector<StringVector>& replies,
                       std::vector<asio::ip::tcp::socket>& sockets)
 {
-  std::array<char, READ_BUFFER_SIZE> readBuffer{};
-  system::error_code errorCode{};
-  std::stringstream replyStream {};
 
-  do
+  auto threadCount {replies.size()};
+
+  std::vector<std::thread> receivingThreads{};
+
+  std::mutex repliesLock{};
+
+  for (size_t idx{0}; idx < threadCount; ++idx)
   {
-    auto bytes_transferred {asio::read(socket, asio::buffer(readBuffer), errorCode)};
-    std::copy(std::begin(readBuffer),
-              std::begin(readBuffer) + bytes_transferred,
-              std::ostream_iterator<char>(replyStream));
-  }
-  while (0 == errorCode);
-  std::string replyString{};
-  if (errorCode == asio::error::eof)
-  {
-    while (std::getline(replyStream, replyString))
+    receivingThreads.push_back(std::thread{[&reply = replies[idx],
+                                          &socket = sockets[idx],
+                                          &lock = repliesLock]()
     {
-      reply.push_back(replyString + "\n");
+      std::array<char, READ_BUFFER_SIZE> readBuffer{};
+      system::error_code errorCode{};
+      std::stringstream replyStream {};
+
+      size_t bytes_transferred{};
+      do
+      {
+        std::cout << " TRY READ... \n";
+        bytes_transferred = asio::read(socket, asio::buffer(readBuffer), errorCode);
+        std::cout << " SOMETHING'S READ... \n";
+        std::copy(std::begin(readBuffer),
+                  std::begin(readBuffer) + bytes_transferred,
+                  std::ostream_iterator<char>(replyStream));
+      }
+      while (socket.is_open());
+      std::string replyString{};
+      if (errorCode == asio::error::eof)
+      {
+        while (std::getline(replyStream, replyString))
+        {
+          std::lock_guard<std::mutex> lockCommonVector{lock};
+          reply.push_back(replyString + "\n");
+        }
+      }
+      else
+      {
+        std::cout << "receive reply error : " << errorCode.message() << "\n";
+      }
     }
+    });
   }
-  else
+
+  for (auto& thread : receivingThreads)
   {
-    std::cout << "receive reply error : " << errorCode.message() << "\n";
+    if (thread.joinable() == true)
+    {
+      thread.join();
+    }
   }
 }
 
 void getGroupServerOutput(const std::vector<StringVector>& requests,
-                          const std::vector<StringVector>& replies,
-                          DebugOutput debug)
+                          std::vector<StringVector>& replies,
+                          DebugOutput debug,
+                          const bool delayRequests)
 {
+  auto requestCount{requests.size()};
 
   std::vector<asio::ip::tcp::socket> sockets{};
-  sockets.resize(requests.size());
-  for (auto& socket : sockets)
+  for (size_t idx {0}; idx < requestCount; ++idx)
   {
-    socket = asio::ip::tcp::socket{testAsioService};
+    sockets.emplace_back(testAsioService);
   }
 
 
-  sendGroupTestRequest(requests, sockets);
+  replies.resize(requestCount);
+
+  std::thread writingThread{[&requests, &sockets, &delayRequests]()
+  {
+     sendGroupTestRequest(requests, sockets, delayRequests);
+  }};
+
+  std::this_thread::sleep_for(10ms);
+
+  std::thread readingThread{[&replies, &sockets]()
+  {
+     receiveTestReply(replies, sockets);
+  }};
+
+  writingThread.join();
+  readingThread.join();
+
 
   if (DebugOutput::DebugOn == debug)
   {
-    for (const auto& string : request)
+    for (const auto& request : requests)
     {
-      std::cout << "> " << string;
+      for (const auto& string : request)
+      {
+        std::cout << "> " << string;
+      }
     }
   }
 
-  socket.shutdown(asio::ip::tcp::socket::shutdown_send);
-
-  receiveTestReply(reply, socket);
+  for (auto& socket : sockets)
+  {
+    socket.shutdown(asio::ip::tcp::socket::shutdown_send);
+  }
 
   if (DebugOutput::DebugOn == debug)
   {
-    for (const auto& string : reply)
+    for (const auto& reply : replies)
     {
-      std::cout << "< " << string;
+      for (const auto& string : reply)
+      {
+        std::cout << "< " << string;
+      }
     }
   }
 }
 
 
 void checkServerRequest(
-  const std::vector<StringVector>& requests, const StringVector& expectedReply,
-  DebugOutput debug, bool groupRequest, size_t sendInterval = 200)
+  const std::vector<StringVector>& requests,
+  const std::vector<StringVector>& expectedReplies,
+  const StringVector& expectedCout,
+  DebugOutput debug,
+  const bool delayRequests
+)
 {
   testOutputStream.clear();
   testErrorStream.clear();
@@ -178,48 +226,75 @@ void checkServerRequest(
 
   std::vector<StringVector> testReplies{};
 
-  getGroupServerOutput(requests, testReplies, debug);
+  getGroupServerOutput(requests, testReplies, debug, delayRequests);
 
   std::string actualCout{testOutputStream.str()};
   std::string actualErrOut{testErrorStream.str()};
 
-  if (groupRequest != true) // non-group request should not mix commands and replies
+  auto requestCount{requests.size()};
+
+  for (size_t idx{0}; idx < requestCount; ++idx)
   {
-    StringVector splitCout{};
-    std::string coutString {};
-    while(std::getline(testOutputStream, coutString))
+    std::multiset<std::string> mixedExpectedReply{
+      expectedReplies[idx].begin(),
+      expectedReplies[idx].end()
+    };
+
+    std::multiset<std::string> mixedTestReply{
+      testReplies[idx].begin(),
+      testReplies[idx].end()
+    };
+
+    BOOST_CHECK_EQUAL_COLLECTIONS(
+      mixedExpectedReply.begin(), mixedExpectedReply.end(),
+      mixedTestReply.begin(), mixedTestReply.end());
+  }
+
+  std::multiset<std::string> mixedCout;
+
+  std::string coutString {};
+  while(std::getline(testOutputStream, coutString))
+  {
+    mixedCout.insert(coutString + "\n");
+  }
+
+  std::multiset<std::string> mixedReply;
+
+  for (const auto& testReply : testReplies)
+  {
+    for (const auto& replyString : testReply)
     {
-      splitCout.push_back(coutString + "\n");
+      mixedReply.insert(replyString);
     }
-    BOOST_CHECK_EQUAL_COLLECTIONS(splitCout.begin(), splitCout.end(),
-                                  expectedReply.begin(), expectedReply.end());
   }
-  else
+
+  std::multiset<std::string> expectedMixedCout;
+
+  for (const auto& expectedString : expectedCout)
   {
-    std::multiset<std::string> mixedCout;
-
-    std::string coutString {};
-    while(std::getline(testOutputStream, coutString))
-    {
-      mixedCout.insert(coutString + "\n");
-    }
-
-    std::multiset<std::string> mixedReply{expectedReply.begin(), expectedReply.end()};
-
-    BOOST_CHECK_EQUAL_COLLECTIONS(mixedCout.begin(), mixedCout.end(),
-                                  mixedReply.begin(), mixedReply.end());
+    expectedMixedCout.insert(expectedString);
   }
 
 
-  for (const auto& requestString : request)
-  {
-    BOOST_CHECK(actualCout.find(requestString) != std::string::npos);
-  }
+  BOOST_CHECK_EQUAL_COLLECTIONS(
+    mixedCout.begin(), mixedCout.end(),
+    expectedMixedCout.begin(), expectedMixedCout.end());
 
-  for (const auto& replyString : testReply)
-  {
-    BOOST_CHECK(actualCout.find(replyString) != std::string::npos);
-  }
+//  for (const auto& request : requests)
+//  {
+//    for (const auto& requestString : request)
+//    {
+//      BOOST_CHECK(actualCout.find(requestString) != std::string::npos);
+//    }
+//  }
+
+//  for (const auto& testReply : testReplies)
+//  {
+//    for (const auto& replyString : testReply)
+//    {
+//      BOOST_CHECK(actualCout.find(replyString) != std::string::npos);
+//    }
+//  }
 
   BOOST_CHECK(actualErrOut.empty() == true);
 }
@@ -229,7 +304,20 @@ void checkServerRequest(
 BOOST_AUTO_TEST_CASE(server_start)
 {
   testServer.start();
-  BOOST_CHECK(testWorkingThread.joinable() == true);
+
+  for(size_t idx{0}; idx < 4; ++idx)
+  {
+    testWorkingThreads.emplace_back(
+    []()
+    {
+      testAsioService.run();
+    });
+  }
+
+  for (const auto& thread : testWorkingThreads)
+  {
+    BOOST_CHECK(thread.joinable() == true);
+  }
 
   testDB->createTable("R");
   testDB->createTable("S");
@@ -253,6 +341,56 @@ BOOST_AUTO_TEST_CASE(server_start)
   testServer.swapDb(tempDB);
   BOOST_CHECK(testServer.getDb()->getTotalDataSize() == 0);
   BOOST_CHECK(testDB.get() == testServer.getDb().get());
+}
+
+BOOST_AUTO_TEST_CASE(multiple_inserts_test)
+{
+  try
+  {
+    std::vector<StringVector> insertRequests{2};
+    std::vector<StringVector> insertReplies{2};
+    StringVector insertCout{};
+
+    for(size_t idx {0}; idx < 1000; ++idx)
+    {
+      insertRequests[0].push_back(std::string{"INSERT A "}
+                                  + std::to_string(idx * 2) + " "
+                                  + std::to_string(idx * 2) + "\n");
+
+             insertCout.push_back(std::string{"> INSERT A "}
+                                  + std::to_string(idx * 2) + " "
+                                  + std::to_string(idx * 2) + "\n");
+
+       insertReplies[0].push_back(std::string{"OK\n"});
+
+            insertCout.push_back (std::string{"< OK\n"});
+    }
+
+    for(size_t idx {1000}; idx < 2000; ++idx)
+    {
+      insertRequests[1].push_back(std::string{"INSERT B "}
+                                  + std::to_string(idx * 2) + " "
+                                  + std::to_string(idx * 2) + "\n");
+
+             insertCout.push_back(std::string{"> INSERT B "}
+                                  + std::to_string(idx * 2) + " "
+                                  + std::to_string(idx * 2) + "\n");
+
+      insertReplies[1].push_back (std::string{"OK\n"});
+
+            insertCout.push_back (std::string{"< OK\n"});
+    }
+
+    checkServerRequest(insertRequests, insertReplies, insertCout,
+                       DebugOutput::DebugOn, false);
+
+    BOOST_CHECK(testDB->getTotalDataSize() == 2000);
+  }
+  catch (const std::exception& ex)
+  {
+    std::cerr << "multiple_duplicates_test failed. " << ex.what();
+    BOOST_FAIL("");
+  }
 }
 
 BOOST_AUTO_TEST_CASE(multiple_duplicates_test)
@@ -288,10 +426,14 @@ BOOST_AUTO_TEST_CASE(server_stop)
   {
     testServer.stop();
     testWork.reset();
-    if(testWorkingThread.joinable() == true)
+
+    for (auto& thread : testWorkingThreads)
     {
-      testWorkingThread.join();
-    };
+      if(thread.joinable() == true)
+      {
+        thread.join();
+      };
+    }
   }
   catch (const std::exception& ex)
   {
