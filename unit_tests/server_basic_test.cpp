@@ -279,7 +279,7 @@ BOOST_AUTO_TEST_CASE(insert_record_test)
                               "< OK\n"};
 
     checkServerRequest(insertRequest, insertReply,
-                       DebugOutput::DebugOff, false, 50);
+                       DebugOutput::DebugOff, false, 20);
   }
   catch (const std::exception& ex)
   {
@@ -306,7 +306,7 @@ BOOST_AUTO_TEST_CASE(truncate_table_test)
                               "< OK\n"};
 
     checkServerRequest(truncateRequest, truncateReply,
-                       DebugOutput::DebugOff, false, 50);
+                       DebugOutput::DebugOff, false, 20);
 
     BOOST_CHECK(testDB->getTotalDataSize() == 0);
   }
@@ -342,7 +342,7 @@ BOOST_AUTO_TEST_CASE(bad_requests_test)
                            "< ERR bad_request 'INTERSECT A B'\n",};
 
     checkServerRequest(badRequest, badReply,
-                       DebugOutput::DebugOff, false, 50);
+                       DebugOutput::DebugOff, false, 20);
 
     BOOST_CHECK(testDB->getTotalDataSize() == 1);
 
@@ -449,7 +449,7 @@ BOOST_AUTO_TEST_CASE(intersection_test)
                        DebugOutput::DebugOff, true);
 
     checkServerRequest(insertRequest, insertReply,
-                       DebugOutput::DebugOff, false, 50);
+                       DebugOutput::DebugOff, false, 20);
 
     BOOST_CHECK(testDB->getTotalDataSize() == 220);
   }
