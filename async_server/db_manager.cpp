@@ -143,6 +143,8 @@ void DbManager::stop()
   while(processor->stopped() != true)
   {}
 
+  terminationFlag.store(true);
+  terminationNotifier.notify_all();
 }
 
 void DbManager::adoptDb(const SharedNaiveDB& newDb)
@@ -170,7 +172,8 @@ void DbManager::processRequest(const SharedDbCommandReaction& request, ServerRep
 
   std::unique_lock<std::mutex> lockAccess{accessLock};  
 
-  if (storage->getTotalDataSize() > SIZE_THRESHOLD)
+  if ((storage->getTotalDataSize() / SIZE_THRESHOLD)
+      > processingThreads.size() * processingThreads.size())
   {
     addProcessingThreads();
   }
@@ -372,6 +375,8 @@ void DbManager::run(SharedService service) noexcept
   {
     std::lock_guard<std::mutex> lockOutput{outputLock};
     errorStream << "Server stopped. Reason: " << ex.what() << '\n';
+
+    stop();
   }
 }
 

@@ -38,12 +38,16 @@ constexpr uint16_t testPortNumber {10007};
 
 constexpr size_t READ_BUFFER_SIZE {100};
 
+std::atomic<bool> shouldExit{false};
+std::condition_variable terminationNotifier{};
+
 
 AsyncJoinServer<2> testServer {
   testAddress,
   testPortNumber,
   testOutputStream,
-  testErrorStream
+  testErrorStream,
+  shouldExit, terminationNotifier
 };
 
 void sendGroupTestRequest(const StringVector& groupRequest, asio::ip::tcp::socket& socket)
@@ -52,13 +56,11 @@ void sendGroupTestRequest(const StringVector& groupRequest, asio::ip::tcp::socke
   asio::ip::tcp::endpoint endpoint{testAddress, testPortNumber};
   socket.connect(endpoint);
 
-  /* build request string*/
-  std::stringstream requestStream {};
+  /* build request string*/  
   for (const auto& command : groupRequest)
   {
     /* send request string */
-    asio::write(socket, asio::buffer(command.c_str(), command.size()));
-    requestStream << command;
+    asio::write(socket, asio::buffer(command.c_str(), command.size()));    
   }
 }
 
@@ -277,7 +279,7 @@ BOOST_AUTO_TEST_CASE(insert_record_test)
                               "< OK\n"};
 
     checkServerRequest(insertRequest, insertReply,
-                       DebugOutput::DebugOff, false, 50);
+                       DebugOutput::DebugOff, false, 20);
   }
   catch (const std::exception& ex)
   {
@@ -304,7 +306,7 @@ BOOST_AUTO_TEST_CASE(truncate_table_test)
                               "< OK\n"};
 
     checkServerRequest(truncateRequest, truncateReply,
-                       DebugOutput::DebugOff, false, 50);
+                       DebugOutput::DebugOff, false, 20);
 
     BOOST_CHECK(testDB->getTotalDataSize() == 0);
   }
@@ -340,7 +342,7 @@ BOOST_AUTO_TEST_CASE(bad_requests_test)
                            "< ERR bad_request 'INTERSECT A B'\n",};
 
     checkServerRequest(badRequest, badReply,
-                       DebugOutput::DebugOff, false, 50);
+                       DebugOutput::DebugOff, false, 20);
 
     BOOST_CHECK(testDB->getTotalDataSize() == 1);
 
@@ -447,7 +449,7 @@ BOOST_AUTO_TEST_CASE(intersection_test)
                        DebugOutput::DebugOff, true);
 
     checkServerRequest(insertRequest, insertReply,
-                       DebugOutput::DebugOff, false, 50);
+                       DebugOutput::DebugOff, false, 20);
 
     BOOST_CHECK(testDB->getTotalDataSize() == 220);
   }
@@ -564,7 +566,7 @@ BOOST_AUTO_TEST_CASE(symmetric_difference_test)
                       DebugOutput::DebugOff, true);
 
     checkServerRequest(insertRequest, insertReply,
-                       DebugOutput::DebugOff, false, 50);
+                       DebugOutput::DebugOff, false, 20);
 
     BOOST_CHECK(testDB->getTotalDataSize() == 220);
   }

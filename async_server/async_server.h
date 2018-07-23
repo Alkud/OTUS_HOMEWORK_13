@@ -24,7 +24,9 @@ public:
     const asio::ip::address_v4 newAddress,
     const uint16_t newPortNumber,
     std::ostream& newOutputStream,
-    std::ostream& newErrorStream
+    std::ostream& newErrorStream,
+    std::atomic<bool>& newAppTerminationFlag,
+    std::condition_variable& newAppTerminationNotifier
   ) :
   address{newAddress},
   portNumber{newPortNumber},
@@ -76,7 +78,10 @@ public:
     outputStream,
     errorStream,
     outputLock
-  )}
+  )},
+
+  appTerminationFlag{newAppTerminationFlag},
+  appTerminationNotifier{newAppTerminationNotifier}
 
   {}
 
@@ -88,6 +93,11 @@ public:
     #endif
 
     stop();
+
+    if (controller.joinable())
+    {
+      controller.join();
+    }
   }
 
   void start()
@@ -111,6 +121,25 @@ public:
     requestThread = std::thread{&AsyncJoinServer::run, this, requestService};
 
     dbManager->start();
+
+    dbManagerStopped.store(false);
+
+    controller =std::thread{[this]()
+    {
+      std::unique_lock<std::mutex> lockTermination{terminationLock};
+      terminationNotifier.wait(lockTermination,[this]()
+      {
+        return (acceptorStopped.load() == true
+                || dbManagerStopped.load() == true);
+      });
+
+      if (dbManagerStopped.load() == true)
+      {
+        stop();
+        appTerminationFlag.store(true);
+        appTerminationNotifier.notify_all();
+      }
+    }};
   }
 
   void stop()
@@ -178,7 +207,16 @@ public:
       {
         return acceptorStopped.load() == true;
       });
-    }    
+    }
+
+    while (dbManagerStopped.load() != true)
+    {
+      std::unique_lock<std::mutex> lockTermination{terminationLock};
+      terminationNotifier.wait_for(lockTermination, 100ms,[this]()
+      {
+        return dbManagerStopped.load() == true;
+      });
+    }
 
     #ifdef NDEBUG
     #else
@@ -225,6 +263,7 @@ private:
     {
       std::lock_guard<std::mutex> lockOutput{outputLock};
       errorStream << "Server stopped. Reason: " << ex.what() << '\n';
+      stop();
     }
   }
 
@@ -295,6 +334,10 @@ private:
   UniqueDbManager dbManager;
 
   static std::mutex outputLock;
+
+  std::thread controller{};
+  std::atomic<bool>& appTerminationFlag;
+  std::condition_variable& appTerminationNotifier;
 };
 
 template<size_t workingThreadCount>

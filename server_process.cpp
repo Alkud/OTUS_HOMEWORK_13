@@ -35,7 +35,8 @@ int serverRun(int argc, char* argv[], std::ostream& outputStream,
 
   AsyncJoinServer<2> server{
     asio::ip::address_v4::any(), portNumber,    
-    outputStream, errorStream
+    outputStream, errorStream,
+    shouldExit, terminationNotifier
   };
 
   server.getDb()->createTable("A");
@@ -58,8 +59,10 @@ int serverRun(int argc, char* argv[], std::ostream& outputStream,
       server.stop();
    }};
 
-
-  mainThread.join();
+  if (mainThread.joinable())
+  {
+    mainThread.join();
+  }
 
   return 0;
 }
