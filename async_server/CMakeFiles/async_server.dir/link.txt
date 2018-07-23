@@ -1,0 +1,2 @@
+/usr/bin/ar qc libasync_server.a  CMakeFiles/async_server.dir/async_acceptor.cpp.o CMakeFiles/async_server.dir/async_reader.cpp.o CMakeFiles/async_server.dir/db_manager.cpp.o CMakeFiles/async_server.dir/db_command_translator.cpp.o
+/usr/bin/ranlib libasync_server.a

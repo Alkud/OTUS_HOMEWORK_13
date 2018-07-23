@@ -1,0 +1,1 @@
+/usr/bin/g++    -rdynamic CMakeFiles/command_translation_test.dir/command_translation_test.cpp.o  -o command_translation_test -lpthread ../async_server/libasync_server.a -lboost_system -lboost_unit_test_framework ../naive_db/libnaive_db.a -lpthread 

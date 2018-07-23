@@ -1,0 +1,1 @@
+/usr/bin/g++    -rdynamic CMakeFiles/join_server.dir/join_server.cpp.o CMakeFiles/join_server.dir/server_process.cpp.o  -o join_server -lpthread async_server/libasync_server.a naive_db/libnaive_db.a -lboost_system -lpthread 

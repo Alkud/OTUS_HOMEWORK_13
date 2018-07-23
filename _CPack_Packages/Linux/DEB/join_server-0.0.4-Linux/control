@@ -1,0 +1,9 @@
+Package: join_server
+Version: 0.0.4
+Section: devel
+Priority: optional
+Architecture: amd64
+Installed-Size: 1407
+Maintainer: alexandr_kudinov@mail.ru
+Description: join_server built using CMake
+

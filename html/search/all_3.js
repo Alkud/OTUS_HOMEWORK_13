@@ -1,0 +1,28 @@
+var searchData=
+[
+  ['data',['data',['../class_naive_table.html#a9fc8d78a9b8454a8f741f24c4ea35007',1,'NaiveTable']]],
+  ['database',['database',['../class_async_join_server.html#a300e98aa5e6e7276564d17c4acebda1d',1,'AsyncJoinServer::database()'],['../class_async_join_server.html#a44628508dbbf42fa249a778fdfa7c18f',1,'AsyncJoinServer::database()']]],
+  ['datalock',['dataLock',['../class_naive_table.html#aaadb9b7db43e68622775233248c6ef31',1,'NaiveTable']]],
+  ['db_5fcommand_5ftranslator_2ecpp',['db_command_translator.cpp',['../db__command__translator_8cpp.html',1,'']]],
+  ['db_5fcommand_5ftranslator_2eh',['db_command_translator.h',['../db__command__translator_8h.html',1,'']]],
+  ['db_5fmanager_2ecpp',['db_manager.cpp',['../db__manager_8cpp.html',1,'']]],
+  ['db_5fmanager_2eh',['db_manager.h',['../db__manager_8h.html',1,'']]],
+  ['db_5foperations_2ecpp',['db_operations.cpp',['../db__operations_8cpp.html',1,'']]],
+  ['db_5foperations_2eh',['db_operations.h',['../db__operations_8h.html',1,'']]],
+  ['dbcommandcodes',['dbCommandCodes',['../class_db_command_translator.html#a9174c54c9d97f77a5bf41f5089e5761d',1,'DbCommandTranslator']]],
+  ['dbcommandreaction',['DbCommandReaction',['../server__common__types_8h.html#a0ec3da81b80d11f83294d2a6781a51bd',1,'server_common_types.h']]],
+  ['dbcommands',['DbCommands',['../server__common__types_8h.html#abbd753d62836467c747bec5ce8167ece',1,'server_common_types.h']]],
+  ['dbcommandtranslator',['DbCommandTranslator',['../class_db_command_translator.html',1,'DbCommandTranslator'],['../class_db_command_translator.html#abab11961a5fff5c1d79313fde8525730',1,'DbCommandTranslator::DbCommandTranslator()']]],
+  ['dbhandlertype',['DbHandlerType',['../db__manager_8h.html#ab59465b1dc773904c3df18d9a598e6c4',1,'db_manager.h']]],
+  ['dbmanager',['DbManager',['../class_db_manager.html',1,'DbManager'],['../class_async_join_server.html#a6c0c7249b745944a28420e86e7993502',1,'AsyncJoinServer::dbManager()'],['../class_async_join_server.html#a954b69d6695433f44237906dc70d5e51',1,'AsyncJoinServer::dbManager()'],['../class_db_manager.html#ad5de4e6272bc931c55c5a964c1afcbe3',1,'DbManager::DbManager(SharedNaiveDB &amp;&amp;newStorage, std::condition_variable &amp;newTerminationNotifier, std::atomic&lt; bool &gt; &amp;newTerminationFlag, std::ostream &amp;newOutputStream, std::ostream &amp;newErrorStream, std::mutex &amp;newOutputLock)'],['../class_db_manager.html#aba066a1276a642bc6be33d867aeff825',1,'DbManager::DbManager(const SharedNaiveDB &amp;newStorage, std::condition_variable &amp;newTerminationNotifier, std::atomic&lt; bool &gt; &amp;newTerminationFlag, std::ostream &amp;newOutputStream, std::ostream &amp;newErrorStream, std::mutex &amp;newOutputLock)'],['../class_db_manager.html#a441687a6e6563b46be0b3112f1c95bbb',1,'DbManager::DbManager(std::condition_variable &amp;newTerminationNotifier, std::atomic&lt; bool &gt; &amp;newTerminationFlag, std::ostream &amp;newOutputStream, std::ostream &amp;newErrorStream, std::mutex &amp;newOutputLock)'],['../class_db_manager.html#ae4be77d988befad248b7ed92fee7a52f',1,'DbManager::DbManager()=delete'],['../class_db_manager.html#aafbe68b1fc042db16b6ce089ac4df0a3',1,'DbManager::DbManager(DbManager &amp;&amp;other)=delete'],['../class_db_manager.html#acb09931ffbbc639d275b4a0f6e5ccb7b',1,'DbManager::DbManager(const DbManager &amp;other)=delete']]],
+  ['dbmanagerstopped',['dbManagerStopped',['../class_async_join_server.html#ad669393f159d06cb468345050e95bad8',1,'AsyncJoinServer']]],
+  ['dboperationsresulttype',['DbOperationsResultType',['../db__operations_8h.html#ac9a43cb075d6e272c4e6ea1de24792d5',1,'db_operations.h']]],
+  ['dbopresult',['DbOpResult',['../naive__db_8h.html#a243bfbd0913496b2566f63d0486035f0',1,'naive_db.h']]],
+  ['default_5fthread_5fcount',['DEFAULT_THREAD_COUNT',['../db__manager_8h.html#a19cce481acb564f3570b52a80bf94d99',1,'db_manager.h']]],
+  ['dispatcher',['dispatcher',['../class_db_manager.html#a03e8480e680a2012ae2bece1a0bce689',1,'DbManager']]],
+  ['dispatcherwork',['dispatcherWork',['../class_db_manager.html#aff93121089cc01a4f62657a10ddb8ffe',1,'DbManager']]],
+  ['dispatchinghandlers',['dispatchingHandlers',['../class_db_manager.html#a362a94e36f1d82e8334a3fa0d2728f70',1,'DbManager']]],
+  ['dispatchingthread',['dispatchingThread',['../class_db_manager.html#ab535401a4e8a037d4a93099b364feae0',1,'DbManager']]],
+  ['doaccept',['doAccept',['../class_async_acceptor.html#a591053c08185947d0ceb44ce72525a19',1,'AsyncAcceptor']]],
+  ['doread',['doRead',['../class_async_reader.html#a9ac21dc2471d21369b04cd8b7e59eb4c',1,'AsyncReader']]]
+];

@@ -1,0 +1,36 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/travis/build/Alkud/OTUS_HOMEWORK_13/unit_tests/command_translation_test.cpp
+boost/test/unit_test.hpp
+-
+sstream
+-
+iostream
+-
+db_command_translator.h
+/home/travis/build/Alkud/OTUS_HOMEWORK_13/unit_tests/db_command_translator.h
+
+unit_tests/../async_server/db_command_translator.h
+string
+-
+vector
+-
+map
+-
+functional
+-
+server_common_types.h
+unit_tests/../async_server/server_common_types.h
+
+unit_tests/../async_server/server_common_types.h
+boost/asio.hpp
+-
+chrono
+-
+

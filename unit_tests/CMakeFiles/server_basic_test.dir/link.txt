@@ -1,0 +1,1 @@
+/usr/bin/g++    -rdynamic CMakeFiles/server_basic_test.dir/server_basic_test.cpp.o  -o server_basic_test -lpthread ../naive_db/libnaive_db.a ../async_server/libasync_server.a -lboost_system -lboost_unit_test_framework ../naive_db/libnaive_db.a -lpthread 

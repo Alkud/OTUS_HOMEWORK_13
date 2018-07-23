@@ -1,0 +1,11 @@
+<map id="server_process.cpp" name="server_process.cpp">
+<area shape="rect" id="node2" href="$server__process_8h.html" title="server_process.h" alt="" coords="1992,80,2115,107"/>
+<area shape="rect" id="node8" href="$async__server_8h.html" title="async_server.h" alt="" coords="1198,80,1308,107"/>
+<area shape="rect" id="node13" href="$async__acceptor_8h.html" title="async_acceptor.h" alt="" coords="1366,155,1491,181"/>
+<area shape="rect" id="node18" href="$server__common__types_8h.html" title="server_common_types.h" alt="" coords="962,304,1126,331"/>
+<area shape="rect" id="node20" href="$db__command__translator_8h.html" title="db_command_translator.h" alt="" coords="176,229,347,256"/>
+<area shape="rect" id="node24" href="$db__manager_8h.html" title="db_manager.h" alt="" coords="874,155,978,181"/>
+<area shape="rect" id="node16" href="$async__reader_8h.html" title="async_reader.h" alt="" coords="1293,229,1403,256"/>
+<area shape="rect" id="node25" href="$naive__db_8h.html" title="naive_db.h" alt="" coords="542,229,627,256"/>
+<area shape="rect" id="node29" href="$db__operations_8h.html" title="db_operations.h" alt="" coords="260,304,375,331"/>
+</map>

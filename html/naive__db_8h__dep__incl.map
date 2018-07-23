@@ -1,0 +1,9 @@
+<map id="naive_db/naive_db.h" name="naive_db/naive_db.h">
+<area shape="rect" id="node2" href="$db__operations_8cpp.html" title="naive_db/db_operations.cpp" alt="" coords="5,80,189,107"/>
+<area shape="rect" id="node3" href="$naive__db_8cpp.html" title="naive_db/naive_db.cpp" alt="" coords="213,80,367,107"/>
+<area shape="rect" id="node4" href="$db__manager_8h.html" title="async_server/db_manager.h" alt="" coords="392,80,579,107"/>
+<area shape="rect" id="node5" href="$async__reader_8cpp.html" title="async_server/async\l_reader.cpp" alt="" coords="253,155,392,197"/>
+<area shape="rect" id="node6" href="$async__server_8h.html" title="async_server/async\l_server.h" alt="" coords="416,155,555,197"/>
+<area shape="rect" id="node8" href="$db__manager_8cpp.html" title="async_server/db_manager.cpp" alt="" coords="579,163,777,189"/>
+<area shape="rect" id="node7" href="$server__process_8cpp.html" title="server_process.cpp" alt="" coords="417,245,552,272"/>
+</map>

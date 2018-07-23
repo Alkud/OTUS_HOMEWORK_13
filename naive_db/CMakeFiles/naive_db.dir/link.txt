@@ -1,0 +1,2 @@
+/usr/bin/ar qc libnaive_db.a  CMakeFiles/naive_db.dir/naive_db.cpp.o CMakeFiles/naive_db.dir/db_operations.cpp.o
+/usr/bin/ranlib libnaive_db.a

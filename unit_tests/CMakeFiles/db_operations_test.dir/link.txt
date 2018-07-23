@@ -1,0 +1,1 @@
+/usr/bin/g++    -rdynamic CMakeFiles/db_operations_test.dir/db_operations_test.cpp.o  -o db_operations_test -lpthread ../naive_db/libnaive_db.a -lboost_system -lboost_unit_test_framework -lpthread 

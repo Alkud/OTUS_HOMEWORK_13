@@ -1,0 +1,42 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/travis/build/Alkud/OTUS_HOMEWORK_13/naive_db/db_operations.cpp
+db_operations.h
+/home/travis/build/Alkud/OTUS_HOMEWORK_13/naive_db/db_operations.h
+algorithm
+-
+naive_db.h
+/home/travis/build/Alkud/OTUS_HOMEWORK_13/naive_db/naive_db.h
+
+/home/travis/build/Alkud/OTUS_HOMEWORK_13/naive_db/db_operations.h
+map
+-
+memory
+-
+
+/home/travis/build/Alkud/OTUS_HOMEWORK_13/naive_db/naive_db.cpp
+naive_db.h
+/home/travis/build/Alkud/OTUS_HOMEWORK_13/naive_db/naive_db.h
+
+/home/travis/build/Alkud/OTUS_HOMEWORK_13/naive_db/naive_db.h
+memory
+-
+map
+-
+set
+-
+vector
+-
+unordered_map
+-
+shared_mutex
+-
+db_operations.h
+/home/travis/build/Alkud/OTUS_HOMEWORK_13/naive_db/db_operations.h
+
