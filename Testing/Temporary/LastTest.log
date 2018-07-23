@@ -1,10 +1,10 @@
-Start testing: Jul 23 19:14 UTC
+Start testing: Jul 23 20:09 UTC
 ----------------------------------------------------------
 1/4 Testing: TEST_DB_OPERATIONS
 1/4 Test: TEST_DB_OPERATIONS
 Command: "/home/travis/build/Alkud/OTUS_HOMEWORK_13/unit_tests/db_operations_test"
 Directory: /home/travis/build/Alkud/OTUS_HOMEWORK_13/unit_tests
-"TEST_DB_OPERATIONS" start time: Jul 23 19:14 UTC
+"TEST_DB_OPERATIONS" start time: Jul 23 20:09 UTC
 Output:
 ----------------------------------------------------------
 Running 9 test cases...
@@ -14,7 +14,7 @@ Running 9 test cases...
 Test time =   0.00 sec
 ----------------------------------------------------------
 Test Passed.
-"TEST_DB_OPERATIONS" end time: Jul 23 19:14 UTC
+"TEST_DB_OPERATIONS" end time: Jul 23 20:09 UTC
 "TEST_DB_OPERATIONS" time elapsed: 00:00:00
 ----------------------------------------------------------
 
@@ -22,7 +22,7 @@ Test Passed.
 2/4 Test: TEST_COMMAND_TRANSLATION
 Command: "/home/travis/build/Alkud/OTUS_HOMEWORK_13/unit_tests/command_translation_test"
 Directory: /home/travis/build/Alkud/OTUS_HOMEWORK_13/unit_tests
-"TEST_COMMAND_TRANSLATION" start time: Jul 23 19:14 UTC
+"TEST_COMMAND_TRANSLATION" start time: Jul 23 20:09 UTC
 Output:
 ----------------------------------------------------------
 Running 3 test cases...
@@ -32,7 +32,7 @@ Running 3 test cases...
 Test time =   0.00 sec
 ----------------------------------------------------------
 Test Passed.
-"TEST_COMMAND_TRANSLATION" end time: Jul 23 19:14 UTC
+"TEST_COMMAND_TRANSLATION" end time: Jul 23 20:09 UTC
 "TEST_COMMAND_TRANSLATION" time elapsed: 00:00:00
 ----------------------------------------------------------
 
@@ -40,7 +40,7 @@ Test Passed.
 3/4 Test: TEST_SERVER_BASIC_OPERATIONS
 Command: "/home/travis/build/Alkud/OTUS_HOMEWORK_13/unit_tests/server_basic_test"
 Directory: /home/travis/build/Alkud/OTUS_HOMEWORK_13/unit_tests
-"TEST_SERVER_BASIC_OPERATIONS" start time: Jul 23 19:14 UTC
+"TEST_SERVER_BASIC_OPERATIONS" start time: Jul 23 20:09 UTC
 Output:
 ----------------------------------------------------------
 Running 7 test cases...
@@ -50,7 +50,7 @@ Running 7 test cases...
 Test time =  11.71 sec
 ----------------------------------------------------------
 Test Passed.
-"TEST_SERVER_BASIC_OPERATIONS" end time: Jul 23 19:14 UTC
+"TEST_SERVER_BASIC_OPERATIONS" end time: Jul 23 20:09 UTC
 "TEST_SERVER_BASIC_OPERATIONS" time elapsed: 00:00:11
 ----------------------------------------------------------
 
@@ -58,18 +58,18 @@ Test Passed.
 4/4 Test: TEST_SERVER_MULTITHREAD_OPERATIONS
 Command: "/home/travis/build/Alkud/OTUS_HOMEWORK_13/unit_tests/server_advanced_test"
 Directory: /home/travis/build/Alkud/OTUS_HOMEWORK_13/unit_tests
-"TEST_SERVER_MULTITHREAD_OPERATIONS" start time: Jul 23 19:14 UTC
+"TEST_SERVER_MULTITHREAD_OPERATIONS" start time: Jul 23 20:09 UTC
 Output:
 ----------------------------------------------------------
 Running 7 test cases...
 
 *** No errors detected
 <end of output>
-Test time =   1.72 sec
+Test time =   1.65 sec
 ----------------------------------------------------------
 Test Passed.
-"TEST_SERVER_MULTITHREAD_OPERATIONS" end time: Jul 23 19:14 UTC
+"TEST_SERVER_MULTITHREAD_OPERATIONS" end time: Jul 23 20:09 UTC
 "TEST_SERVER_MULTITHREAD_OPERATIONS" time elapsed: 00:00:01
 ----------------------------------------------------------
 
-End testing: Jul 23 19:14 UTC
+End testing: Jul 23 20:09 UTC

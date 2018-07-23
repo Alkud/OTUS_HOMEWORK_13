@@ -29,6 +29,7 @@ find_package(Threads)
 
 set(BOOST_DEBUG                ON)
 set(Boost_USE_MULTITHREADED    ON)
+set(Boost_USE_STATIC_LIBS      ON)
 
 set(server_process
     ${PROJECT_SOURCE_DIR}/server_process.h
