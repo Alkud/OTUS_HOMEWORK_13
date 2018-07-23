@@ -1,6 +1,6 @@
 project(unit_tests)
 
-find_package(Boost COMPONENTS unit_test_framework REQUIRED)
+find_package(Boost COMPONENTS system unit_test_framework REQUIRED)
 find_package(Threads)
 
 add_executable(db_operations_test  db_operations_test.cpp)

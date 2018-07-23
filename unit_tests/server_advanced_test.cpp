@@ -58,7 +58,8 @@ void sendGroupTestRequest(const std::vector<StringVector>& groupRequests,
 
   for (size_t idx{0}; idx < threadCount; ++idx)
   {
-    sendingThreads.push_back(std::thread{[&groupRequest = groupRequests[idx],
+
+    sendingThreads.push_back(std::thread{[groupRequest = groupRequests[idx],
                                           &socket = sockets[idx]]()
     {
       /*connect to testServer*/
