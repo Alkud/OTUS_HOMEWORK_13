@@ -43,22 +43,26 @@ set_target_properties(server_advanced_test PROPERTIES
 
 
 target_link_libraries(db_operations_test
+  pthread
   naive_db
   ${Boost_LIBRARIES}
 )
 
 target_link_libraries(command_translation_test
+  pthread
   async_server
   ${Boost_LIBRARIES}
 )
 
 target_link_libraries(server_basic_test
+  pthread
   naive_db
   async_server
   ${Boost_LIBRARIES}
 )
 
 target_link_libraries(server_advanced_test
+  pthread
   naive_db
   async_server
   ${Boost_LIBRARIES}
