@@ -565,9 +565,6 @@ BOOST_AUTO_TEST_CASE(symmetric_difference_test)
     checkServerRequest(insertRequest, insertReply,
                       DebugOutput::DebugOff, true);
 
-    checkServerRequest(insertRequest, insertReply,
-                       DebugOutput::DebugOff, false, 50);
-
     BOOST_CHECK(testDB->getTotalDataSize() == 220);
   }
   catch (const std::exception& ex)
