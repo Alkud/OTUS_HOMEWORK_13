@@ -51,9 +51,6 @@ public:
  /// Move assign operator
  NaiveTable& operator=(NaiveTable&& other);
 
- /// Copies actual data to destination table
- //void makeCopy(NaiveTable& destination);
-
  /// Removes all records
  void clear();
 

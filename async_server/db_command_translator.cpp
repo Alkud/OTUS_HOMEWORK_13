@@ -6,7 +6,7 @@ DbCommandTranslator::dbCommandCodes
   {"INSERT", {static_cast<uint>(DbCommands::INSERT), 3}},                             // code = 0, number of arguments = 3
   {"TRUNCATE", {static_cast<uint>(DbCommands::TRUNCATE), 1}},                         // code = 100, number of arguments = 1
   {"INTERSECTION", {static_cast<uint>(DbCommands::INTERSECTION), 0}},                 // code = 200, number of arguments = 0
-  {"SYMMETRIC_DIFFERENCE", {static_cast<uint>(DbCommands::SYMMETRIC_DIFFERENCE), 0}}, // code = 300, number of arguments = 3
+  {"SYMMETRIC_DIFFERENCE", {static_cast<uint>(DbCommands::SYMMETRIC_DIFFERENCE), 0}}, // code = 300, number of arguments = 0
 };
 
 DbCommandReaction DbCommandTranslator::translate(const std::string& request, SharedSocket replySocket)

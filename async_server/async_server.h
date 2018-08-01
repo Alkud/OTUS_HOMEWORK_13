@@ -274,8 +274,7 @@ private:
 
     dbManager->processRequest(request,
       [this](const SharedStringVector& message, const SharedSocket& socket)
-    {
-      //std::cout << "process db request" << (*message)[0] << "\n";
+    {      
       processDbReply(message, socket);
     });
   }
@@ -294,10 +293,6 @@ private:
         {
           std::lock_guard<std::mutex> lockOutput{outputLock};
           outputStream << "< " << writeString;
-
-          //outputStream << "socket use count: " << socket.use_count() << "\n";
-
-          //socket->shutdown(asio::ip::tcp::socket::shutdown_send);
         }
       });
     }

@@ -150,14 +150,6 @@ NaiveDB& NaiveDB::operator=(NaiveDB&& other)
   return *this;
 }
 
-//void NaiveDB::makeCopy(NaiveDB& destination) const
-//{
-//  std::unique_lock<std::shared_timed_mutex> lockSelfTables{tablesLock};
-//  std::unique_lock<std::shared_timed_mutex> lockDestinationTables{tablesLock};
-
-//  destination.tables = tables;
-//}
-
 void NaiveDB::clear()
 {
   std::unique_lock<std::shared_timed_mutex> lockSelfTables{tablesLock};
