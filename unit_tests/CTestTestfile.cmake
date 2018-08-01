@@ -7,4 +7,3 @@
 add_test(TEST_DB_OPERATIONS "/home/travis/build/Alkud/OTUS_HOMEWORK_13/unit_tests/db_operations_test")
 add_test(TEST_COMMAND_TRANSLATION "/home/travis/build/Alkud/OTUS_HOMEWORK_13/unit_tests/command_translation_test")
 add_test(TEST_SERVER_BASIC_OPERATIONS "/home/travis/build/Alkud/OTUS_HOMEWORK_13/unit_tests/server_basic_test")
-add_test(TEST_SERVER_MULTITHREAD_OPERATIONS "/home/travis/build/Alkud/OTUS_HOMEWORK_13/unit_tests/server_advanced_test")

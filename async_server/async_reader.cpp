@@ -50,8 +50,8 @@ AsyncReader::~AsyncReader()
 {
   #ifdef NDEBUG
   #else
-    //std::cout << "-- reader destructor\n";
-  #endif
+    std::cout << "-- reader destructor\n";
+  #endif  
 
   if (controller.joinable())
   {
@@ -78,7 +78,9 @@ void AsyncReader::start()
         std::unique_lock<std::mutex> dummyLock{dummyMutex};
         controllerNotifier.wait_for(dummyLock, 100ms, [this]()
         {
-          return shouldExit.load() == true || stopped.load() == true;
+          return shouldExit.load() == true
+                 || stopped.load() == true
+                 || socket->is_open() != true;
         });
       }
 
@@ -110,21 +112,6 @@ void AsyncReader::stop()
 
   if (socket != nullptr)
   {    
-    if (socket->is_open())
-    {
-      #ifdef NDEBUG
-      #else
-       //std::cout << "-- reader socket shutdown\n";
-      #endif
-
-      //socket->shutdown(asio::ip::tcp::socket::shutdown_receive);
-
-      #ifdef NDEBUG
-      #else
-        //std::cout << "-- reader socket close\n";
-      #endif
-    }
-
     if (readerCounter.load() != 0)
     {
       --readerCounter;
@@ -147,16 +134,12 @@ void AsyncReader::doRead()
     //std::cout << "-- start doRead\n";
   #endif
 
-  asio::async_read_until(*socket, readBuffer,
-  '\n',
+  asio::async_read_until(*socket, readBuffer, '\n',
   [this](const system::error_code& error, std::size_t bytes_transferred)
   {
     if (shouldExit.load() != true && !error)
     {
       onReading(bytes_transferred, socket);
-
-      //std::cout << "-- repeat doRead\n";
-
       doRead();
     }
     else
@@ -171,8 +154,7 @@ void AsyncReader::onReading(std::size_t bytes_transferred, SharedSocket socket)
   #ifdef NDEBUG
   #else
     //std::cout << "-- start onReading\n";
-  #endif  
-
+  #endif
 
   std::string fullRequest{
     std::istreambuf_iterator<char>(&readBuffer),
@@ -183,12 +165,9 @@ void AsyncReader::onReading(std::size_t bytes_transferred, SharedSocket socket)
 
   std::string request{};
 
-  //std::cout << "-- onReading pre while\n";
-
   for(;;)
   {
     std::getline(requestBuffer, request);
-    //std::cout << "-- onReading inside while\n";
 
     /* ignore empty commands */
     if (request.empty() == true)
@@ -232,7 +211,6 @@ void AsyncReader::processRequest(const std::string& request)
 
   auto sharedReaction {std::make_shared<DbCommandReaction>(reaction)};
 
-  //std::cout << "post serever request" << request << "\n";
   requestService->post([callback = requestCallback, sharedReaction]()
   {
     callback(sharedReaction);

@@ -1,5 +1,5 @@
 Package: join_server
-Version: 0.0.6
+Version: 0.0.7
 Section: devel
 Priority: optional
 Architecture: amd64
